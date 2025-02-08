@@ -1,10 +1,10 @@
-package com.ticket;
+package com.safeticket;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class TicketApplicationTests {
+class SafeTicketApplicationTests {
 
     @Test
     void contextLoads() {
