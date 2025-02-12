@@ -2,6 +2,7 @@ package com.safeticket.event.service;
 
 import com.safeticket.event.entity.Event;
 import com.safeticket.event.EventRepository;
+import com.safeticket.event.exception.EventNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -15,7 +16,8 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public Event getEventById(Long id) {
-        return eventRepository.findById(id).orElse(null);
+        return eventRepository.findById(id)
+                .orElseThrow(() -> new EventNotFoundException(id));
     }
 
     @Override
