@@ -1,6 +1,8 @@
 package com.safeticket.event.entity;
 
 import com.safeticket.common.util.BaseTimeEntity;
+import com.safeticket.showtime.entity.Showtime;
+import com.safeticket.venue.entity.Venue;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -8,39 +10,42 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Event extends BaseTimeEntity {
     @Id
-    @GeneratedValue
-    @Column(name = "EVENT_ID")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "eventId")
     private Long id;
 
+    @Column(columnDefinition = "VARCHAR(255) COMMENT '이벤트명'")
     private String name;
-    private String date_time;
-    private String location;
+
+    @Column(columnDefinition = "VARCHAR(255) COMMENT '이벤트 설명'")
+    private String description;
+
+    @Column(columnDefinition = "INT COMMENT '공연시간'")
+    private Integer durationMinutes;
+
+    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Showtime> showtimes = new ArrayList<>();
 
     @Enumerated(EnumType.STRING)
     private EventStatus status;
 
     @Builder
-    public Event(String name, String date_time, String location, EventStatus status) {
-        this.name = name;
-        this.date_time = date_time;
-        this.location = location;
-        this.status = status;
-    }
-
-    @Builder
-    public Event(Long id, String name, String date_time, String location, EventStatus status, LocalDateTime created_at, LocalDateTime updated_at) {
+    public Event(Long id, String name, String description, Integer durationMinutes, List<Showtime> showtimes, EventStatus status, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.name = name;
-        this.date_time = date_time;
-        this.location = location;
+        this.description = description;
+        this.durationMinutes = durationMinutes;
+        this.showtimes = showtimes;
         this.status = status;
-        this.created_at = created_at;
-        this.updated_at = updated_at;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
     }
 }
