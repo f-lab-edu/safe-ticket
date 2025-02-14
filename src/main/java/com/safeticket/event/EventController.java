@@ -1,6 +1,6 @@
 package com.safeticket.event;
 
-import com.safeticket.event.dto.EventResponse;
+import com.safeticket.event.dto.EventDTO;
 import com.safeticket.event.entity.Event;
 import com.safeticket.event.service.EventService;
 import lombok.RequiredArgsConstructor;
@@ -20,17 +20,12 @@ public class EventController {
     private final EventService eventService;
 
     @GetMapping("/{id}")
-    public ResponseEntity<EventResponse> getEventById(@PathVariable Long id) {
-        return ResponseEntity.ok(EventResponse.of(eventService.getEventById(id)));
-    }
-
-    @GetMapping("/{id}/showtimes")
-    public ResponseEntity<EventResponse> getEventByIdWithShowtimes(@PathVariable Long id) {
-        return ResponseEntity.ok(EventResponse.of(eventService.getEventByIdWithShowtimes(id)));
+    public ResponseEntity<EventDTO> getEventById(@PathVariable Long id) {
+        return ResponseEntity.ok(EventDTO.of(eventService.getEventByIdWithShowtimes(id), true));
     }
 
     @GetMapping
-    public List<Event> getAllEvents() {
-        return eventService.getAllEvents();
+    public ResponseEntity<List<EventDTO>> getAllEvents() {
+        return ResponseEntity.ok(EventDTO.ofList(eventService.getAllEvents()));
     }
 }
