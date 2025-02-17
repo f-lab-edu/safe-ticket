@@ -2,7 +2,6 @@ package com.safeticket.event.entity;
 
 import com.safeticket.common.util.BaseTimeEntity;
 import com.safeticket.showtime.entity.Showtime;
-import com.safeticket.venue.entity.Venue;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -31,7 +30,7 @@ public class Event extends BaseTimeEntity {
     @Column(columnDefinition = "INT COMMENT '공연시간'")
     private Integer durationMinutes;
 
-    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "event", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Showtime> showtimes = new ArrayList<>();
 
     @Enumerated(EnumType.STRING)
