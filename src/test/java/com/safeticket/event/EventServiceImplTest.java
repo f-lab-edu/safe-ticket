@@ -1,8 +1,10 @@
 package com.safeticket.event;
 
-import com.safeticket.event.dto.EventResponse;
+import com.safeticket.event.dto.EventDTO;
 import com.safeticket.event.entity.Event;
 import com.safeticket.event.entity.EventStatus;
+import com.safeticket.event.exception.EventNotFoundException;
+import com.safeticket.event.repository.EventRepository;
 import com.safeticket.event.service.EventServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -11,10 +13,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -29,14 +33,23 @@ public class EventServiceImplTest {
 
     Event event;
 
-    EventResponse eventResponse;
+    Event event2;
+
+    EventDTO eventDTO;
 
     @BeforeEach
     void setUp() {
         event = Event.builder()
                 .name("이벤트명")
-                .date_time("2023-10-10T10:00:00")
-                .location("장소")
+                .durationMinutes(120)
+                .description("설명")
+                .status(EventStatus.PUBLISHED)
+                .build();
+
+        event2 = Event.builder()
+                .name("이벤트명2")
+                .durationMinutes(90)
+                .description("설명2")
                 .status(EventStatus.PUBLISHED)
                 .build();
     }
@@ -51,5 +64,30 @@ public class EventServiceImplTest {
 
         // then
         assertThat(result).isEqualTo(event);
+    }
+
+    @Test
+    public void getEventById_shouldThrowEventNotFoundException_whenEventNotExist() {
+        // given
+        when(eventRepository.findById(any())).thenReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> eventService.getEventById(1L))
+                .isInstanceOf(EventNotFoundException.class);
+    }
+
+    @Test
+    public void getAllEvents_shouldReturnAllEvents() {
+        // given
+        List<Event> events = new ArrayList<>();
+        events.add(event);
+        events.add(event2);
+        when(eventRepository.findAll()).thenReturn(events);
+
+        // when
+        eventService.getAllEvents();
+
+        // then
+        assertThat(eventRepository.findAll()).isEqualTo(events);
     }
 }
