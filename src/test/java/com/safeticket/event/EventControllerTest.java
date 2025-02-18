@@ -63,7 +63,7 @@ public class EventControllerTest {
     }
 
     @Test
-    public void getEventById_shouldReturnEvent() throws Exception {
+    public void getEventByIdShouldReturnEvent() throws Exception {
         // given
         when(eventService.getEventByIdWithShowtimes(1L)).thenReturn(event1);
 
@@ -79,7 +79,7 @@ public class EventControllerTest {
     }
 
     @Test
-    public void getEventById_shouldReturn404_whenEventNotExist() throws Exception {
+    public void getEventByIdShouldReturn404WhenEventNotExist() throws Exception {
         // given
         when(eventService.getEventByIdWithShowtimes(1L)).thenThrow(new EventNotFoundException(1L));
 
@@ -89,7 +89,7 @@ public class EventControllerTest {
     }
 
     @Test
-    public void getAllEvents_shouldReturnAllEvents() throws Exception {
+    public void getAllEventsShouldReturnAllEvents() throws Exception {
         // given
         when(eventService.getAllEvents()).thenReturn(new ArrayList<>());
 

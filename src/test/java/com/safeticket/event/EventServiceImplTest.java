@@ -55,7 +55,7 @@ public class EventServiceImplTest {
     }
 
     @Test
-    public void getEventById_shouldReturnEvent_whenEventExist() {
+    public void getEventByIdShouldReturnEventWhenEventExist() {
         // given
         when(eventRepository.findById(1L)).thenReturn(Optional.of(event));
 
@@ -67,7 +67,7 @@ public class EventServiceImplTest {
     }
 
     @Test
-    public void getEventById_shouldThrowEventNotFoundException_whenEventNotExist() {
+    public void getEventByIdShouldThrowEventNotFoundExceptionWhenEventNotExist() {
         // given
         when(eventRepository.findById(any())).thenReturn(Optional.empty());
 
@@ -77,7 +77,7 @@ public class EventServiceImplTest {
     }
 
     @Test
-    public void getAllEvents_shouldReturnAllEvents() {
+    public void getAllEventsShouldReturnAllEvents() {
         // given
         List<Event> events = new ArrayList<>();
         events.add(event);
