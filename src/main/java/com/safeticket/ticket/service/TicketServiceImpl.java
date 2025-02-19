@@ -7,6 +7,7 @@ import com.safeticket.ticket.repository.TicketRepository;
 import jakarta.persistence.PessimisticLockException;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.exception.LockAcquisitionException;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,16 +21,17 @@ public class TicketServiceImpl implements TicketService {
 
     private final TicketRepository ticketRepository;
 
+    @Value("${ticket.expiration.minutes}")
+    private int expirationMinutes;
+
     @Override
     @Transactional
     public void reserveTickets(TicketDTO ticketDTO) {
         try {
             List<Ticket> tickets = ticketRepository.findAvailableTicketsWithLock(ticketDTO.getTicketIds());
-            if(tickets.size() != ticketDTO.getTicketIds().size()) {
-                throw new TicketsNotAvailableException();
-            }
+            validateTickets(tickets, ticketDTO.getTicketIds());
 
-            Duration expirationTime = Duration.ofMinutes(5);
+            Duration expirationTime = Duration.ofMinutes(expirationMinutes);
 
             for(Ticket ticket : tickets) {
                 ticket.reserve(ticketDTO.getUserId(), expirationTime);
@@ -37,6 +39,12 @@ public class TicketServiceImpl implements TicketService {
 
             ticketRepository.saveAll(tickets);
         } catch (PessimisticLockException | LockAcquisitionException e) {
+            throw new TicketsNotAvailableException();
+        }
+    }
+
+    private void validateTickets(List<Ticket> tickets, List<Long> ticketIds) {
+        if(tickets.size() != ticketIds.size()) {
             throw new TicketsNotAvailableException();
         }
     }
