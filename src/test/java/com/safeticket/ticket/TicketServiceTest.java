@@ -61,7 +61,7 @@ public class TicketServiceTest {
     }
 
     @Test
-    public void getReserveTickets_shouldReserveAndSaveTickets(){
+    public void getReserveTicketsShouldReserveAndSaveTickets(){
         // given
         when(ticketRepository.findAvailableTicketsWithLock(ticketDTO.getTicketIds()))
                 .thenReturn(Arrays.asList(ticket1, ticket2));
@@ -75,7 +75,7 @@ public class TicketServiceTest {
     }
 
     @Test
-    public void getReserveTickets_shouldThrowException_whenTicketNotAvailable(){
+    public void getReserveTicketsShouldThrowExceptionWhenTicketNotAvailable(){
         // given
         when(ticketRepository.findAvailableTicketsWithLock(ticketDTO.getTicketIds()))
                 .thenReturn(Collections.singletonList(ticket1));
@@ -86,7 +86,7 @@ public class TicketServiceTest {
     }
 
     @Test
-    public void getReserveTickets_shouldThrowException_whenLockIsAlreadyAcquired() {
+    public void getReserveTicketsShouldThrowExceptionWhenLockIsAlreadyAcquired() {
         when(ticketRepository.findAvailableTicketsWithLock(anyList())).thenThrow(new PessimisticLockException());
 
         Assertions.assertThatThrownBy(() -> ticketService.reserveTickets(ticketDTO))
