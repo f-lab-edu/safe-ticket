@@ -1,14 +1,14 @@
 package com.safeticket.ticket.controller;
 
+import com.safeticket.ticket.dto.AvailableTicketsDTO;
 import com.safeticket.ticket.dto.TicketDTO;
 import com.safeticket.ticket.service.TicketService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -16,6 +16,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class TicketController {
 
     final TicketService ticketService;
+
+    @GetMapping("/available/{showtimeId}")
+    public ResponseEntity<AvailableTicketsDTO> getAvailableTickets(@PathVariable Long showtimeId) {
+        return ResponseEntity.ok(ticketService.getAvailableTickets(showtimeId));
+    }
 
     @PostMapping("/reservations")
     public ResponseEntity<Void> reserveTickets(@RequestBody TicketDTO ticketDTO) {
