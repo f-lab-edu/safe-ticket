@@ -7,8 +7,9 @@ import com.safeticket.ticket.exception.TicketsNotAvailableException;
 import com.safeticket.ticket.repository.TicketRepository;
 import jakarta.persistence.PessimisticLockException;
 import lombok.RequiredArgsConstructor;
-import org.hibernate.exception.LockAcquisitionException;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.ConcurrencyFailureException;
+import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -47,7 +48,7 @@ public class TicketServiceImpl implements TicketService {
             }
 
             ticketRepository.saveAll(tickets);
-        } catch (PessimisticLockException | LockAcquisitionException e) {
+        } catch (PessimisticLockException | ConcurrencyFailureException e) {
             throw new TicketsNotAvailableException();
         }
     }
