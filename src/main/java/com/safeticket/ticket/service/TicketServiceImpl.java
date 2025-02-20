@@ -1,6 +1,7 @@
 package com.safeticket.ticket.service;
 
 import com.safeticket.ticket.domain.Ticket;
+import com.safeticket.ticket.dto.AvailableTicketsDTO;
 import com.safeticket.ticket.dto.TicketDTO;
 import com.safeticket.ticket.exception.TicketsNotAvailableException;
 import com.safeticket.ticket.repository.TicketRepository;
@@ -23,6 +24,14 @@ public class TicketServiceImpl implements TicketService {
 
     @Value("${ticket.expiration.minutes}")
     private int expirationMinutes;
+
+    @Override
+    public AvailableTicketsDTO getAvailableTickets(Long showtimeId) {
+        List<Long> ticketIds = ticketRepository.findAvailableTickets(showtimeId);
+        return AvailableTicketsDTO.builder()
+                .ticketIds(ticketIds)
+                .build();
+    }
 
     @Override
     @Transactional
