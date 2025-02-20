@@ -22,7 +22,7 @@ public class TicketController {
         return ResponseEntity.ok(ticketService.getAvailableTickets(showtimeId));
     }
 
-    @PostMapping("/reservations")
+    @PutMapping("/reservations")
     public ResponseEntity<Void> reserveTickets(@RequestBody TicketDTO ticketDTO) {
         ticketService.reserveTickets(ticketDTO);
         return ResponseEntity.ok().build();

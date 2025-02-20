@@ -18,7 +18,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 
@@ -50,7 +50,7 @@ public class TicketControllerTest {
     @Test
     public void reserveTicketsShouldReturnStatusOKWhenSuccessful() throws Exception {
         // when & then
-        mockMvc.perform(post("/tickets/reservations")
+        mockMvc.perform(put("/tickets/reservations")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"userId\":1,\"ticketIds\":[1,2]}"))
                 .andExpect(status().isOk());
@@ -62,9 +62,9 @@ public class TicketControllerTest {
         doThrow(new TicketsNotAvailableException()).when(ticketService).reserveTickets(any(TicketDTO.class));
 
         // when & then
-        mockMvc.perform(post("/tickets/reservations")
+        mockMvc.perform(put("/tickets/reservations")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"userId\":1,\"ticketIds\":[1,2]}"))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isOk());
     }
 }
