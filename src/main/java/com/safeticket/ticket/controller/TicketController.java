@@ -5,7 +5,6 @@ import com.safeticket.ticket.dto.AvailableTicketsDTO;
 import com.safeticket.ticket.dto.TicketDTO;
 import com.safeticket.ticket.service.TicketService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,7 +17,6 @@ public class TicketController {
 
     private final TicketService ticketService;
 
-    @Cacheable("availableTickets")
     @TrackMetrics("available_tickets_requests_total")
     @GetMapping("/available/{showtimeId}")
     public ResponseEntity<AvailableTicketsDTO> getAvailableTickets(@PathVariable Long showtimeId) {
