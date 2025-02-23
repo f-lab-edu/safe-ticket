@@ -1,4 +1,4 @@
-package com.safeticket.common.config;
+package com.safeticket.common.cache;
 
 import org.ehcache.jsr107.EhcacheCachingProvider;
 import org.springframework.cache.annotation.EnableCaching;
