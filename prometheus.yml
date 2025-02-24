@@ -8,3 +8,11 @@ scrape_configs:
       - targets: ['host.docker.internal:8080']
         labels:
           node_id: 'ticket-app'
+
+rule_files:
+  - 'alert-rules.yml'
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['alertmanager:9093']
