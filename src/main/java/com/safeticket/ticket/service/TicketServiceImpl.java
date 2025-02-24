@@ -8,8 +8,8 @@ import com.safeticket.ticket.repository.TicketRepository;
 import jakarta.persistence.PessimisticLockException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.dao.ConcurrencyFailureException;
-import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +27,7 @@ public class TicketServiceImpl implements TicketService {
     private int expirationMinutes;
 
     @Override
+    @Cacheable("availableTickets")
     public AvailableTicketsDTO getAvailableTickets(Long showtimeId) {
         List<Long> ticketIds = ticketRepository.findAvailableTickets(showtimeId);
         return AvailableTicketsDTO.builder()
