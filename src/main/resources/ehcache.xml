@@ -4,11 +4,10 @@
 
     <cache alias="availableTickets">
         <expiry>
-            <ttl unit="seconds">10</ttl>
+            <ttl>10</ttl>
         </expiry>
         <resources>
-            <heap unit="entries">10</heap>
+            <heap>10</heap>
         </resources>
     </cache>
-
 </config>
