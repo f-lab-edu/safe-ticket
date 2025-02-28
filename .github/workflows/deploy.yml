@@ -125,4 +125,3 @@ jobs:
             docker-compose pull
             docker-compose down
             docker-compose up -D
-        working-directory: monitoring
