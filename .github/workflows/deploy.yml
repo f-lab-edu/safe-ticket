@@ -50,7 +50,7 @@ jobs:
           distribution: 'adopt'
 
       - name: Gradle 빌드
-        run: ./gradlew build
+        run: ./gradlew build -Dspring.profiles.active=test
         working-directory: ticket-server
 
       - name: Docker 이미지 빌드
