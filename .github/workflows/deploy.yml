@@ -74,7 +74,7 @@ jobs:
       - name: 티켓 서버 EC2에 배포
         uses: appleboy/ssh-action@v0.1.3
         with:
-          host: ${{ evn.TICKET_SERVER_PUBLIC_IP }}
+          host: ${{ env.TICKET_SERVER_PUBLIC_IP }}
           username: ${{ secrets.SPRING_EC2_USER }}
           key: ${{ secrets.SPRING_EC2_SSH_KEY }}
           port: 22
@@ -101,7 +101,7 @@ jobs:
       - name: AWS EC2로 모니터링 파일 전송
         uses: appleboy/scp-action@master
         with:
-          host: ${{ steps.monitoring-server-ec2-info.outputs.monitoring_public_ip }}
+          host: ${{ env.MONITORING_PUBLIC_IP }}
           username: ${{ secrets.SPRING_EC2_USER }}
           key: ${{ secrets.SPRING_EC2_SSH_KEY }}
           port: 22
