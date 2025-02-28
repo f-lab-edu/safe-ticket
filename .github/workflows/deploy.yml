@@ -73,7 +73,7 @@ jobs:
 
   deploy-spring:
     runs-on: ubuntu-latest
-    needs: build-spring
+    needs: [build-spring, get-ec2-info]
 
     steps:
       - name: 티켓 서버 EC2에 배포
@@ -108,7 +108,7 @@ jobs:
 
   deploy-monitoring:
     runs-on: ubuntu-latest
-    needs: build-monitoring
+    needs: [build-monitoring, get-ec2-info]
 
     steps:
       - name: 모니터링 서버 EC2에 배포
