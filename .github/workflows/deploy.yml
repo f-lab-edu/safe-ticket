@@ -93,8 +93,9 @@ jobs:
               -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
               boosterko/ticket-app:latest
 
-  build-monitoring:
+  deploy-monitoring:
     runs-on: ubuntu-latest
+    needs: get-ec2-info
 
     steps:
       - name: Checkout code
@@ -102,15 +103,17 @@ jobs:
         with:
           path: monitoring
 
-      - name: 모니터링 서버 Docker 이미지 빌드
-        run: docker-compose build
-        working-directory: monitoring
+      - name: AWS EC2로 모니터링 파일 전송
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ steps.monitoring-server-ec2-info.outputs.monitoring_public_ip }}
+          username: ${{ secrets.SPRING_EC2_USER }}
+          key: ${{ secrets.SPRING_EC2_SSH_KEY }}
+          port: 22
+          source: "monitoring/*"
+          target: "/home/ec2-user/monitoring"
+          overwrite: true
 
-  deploy-monitoring:
-    runs-on: ubuntu-latest
-    needs: [build-monitoring, get-ec2-info]
-
-    steps:
       - name: 모니터링 서버 EC2에 배포
         uses: appleboy/ssh-action@v0.1.3
         with:
