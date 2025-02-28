@@ -119,6 +119,7 @@ jobs:
           key: ${{ secrets.SPRING_EC2_SSH_KEY }}
           port: 22
           script: |
+            cd monitoring
             export GRAFANA_PASSWORD=${{ secrets.GRAFANA_PASSWORD }}
             export SLACK_API_URL=${{ secrets.SLACK_API_URL }}
             docker-compose pull
