@@ -20,24 +20,19 @@ jobs:
       - name: Ticket 서버 EC2 Public IP 가져오기
         id: ticket-server-ec2-info
         run: |
-          TICKET_SERVER_PUBLIC_IP=$(aws ec2 describe-instances \
-            --filters "Name=tag:Name,Values=ticket-server" "Name=instance-state-name,Values=running" \
+          echo "TICKET_SERVER_PUBLIC_IP=$(aws ec2 describe-instances \
+            --filters 'Name=tag:Name,Values=ticket-server' 'Name=instance-state-name,Values=running' \
             --query 'Reservations[0].Instances[0].PublicIpAddress' \
-            --output text)
-
-          echo "TICKET_SERVER_PUBLIC_IP=$TICKET_SERVER_PUBLIC_IP" >> $GITHUB_ENV
-          echo "::set-output name=ticket_server_public_ip::$TICKET_SERVER_PUBLIC_IP"
+            --output text)" >> $GITHUB_ENV
 
       - name: Monitoring 서버 EC2 Public IP 가져오기
         id: monitoring-server-ec2-info
         run: |
-          MONITORING_PUBLIC_IP=$(aws ec2 describe-instances \
+          echo "MONITORING_PUBLIC_IP=$(aws ec2 describe-instances \
             --filters "Name=tag:Name,Values=monitoring-server" "Name=instance-state-name,Values=running" \
             --query 'Reservations[0].Instances[0].PublicIpAddress' \
-            --output text)
+            --output text)" >> $GITHUB_ENV
 
-          echo "MONITORING_PUBLIC_IP=$MONITORING_PUBLIC_IP" >> $GITHUB_ENV
-          echo "::set-output name=monitoring_public_ip::$MONITORING_PUBLIC_IP"    
 
   build-spring:
     runs-on: ubuntu-latest
@@ -79,7 +74,7 @@ jobs:
       - name: 티켓 서버 EC2에 배포
         uses: appleboy/ssh-action@v0.1.3
         with:
-          host: ${{ steps.ticket-server-ec2-info.outputs.ticket_server_public_ip }}
+          host: ${{ evn.TICKET_SERVER_PUBLIC_IP }}
           username: ${{ secrets.SPRING_EC2_USER }}
           key: ${{ secrets.SPRING_EC2_SSH_KEY }}
           port: 22
@@ -117,7 +112,7 @@ jobs:
       - name: 모니터링 서버 EC2에 배포
         uses: appleboy/ssh-action@v0.1.3
         with:
-          host: ${{ steps.monitoring-server-ec2-info.outputs.monitoring_public_ip }}
+          host: ${{ env.MONITORING_PUBLIC_IP }}
           username: ${{ secrets.SPRING_EC2_USER }}
           key: ${{ secrets.SPRING_EC2_SSH_KEY }}
           port: 22
