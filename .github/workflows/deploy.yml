@@ -8,6 +8,8 @@ on:
 jobs:
   get-ec2-info:
     runs-on: ubuntu-latest
+    outputs:
+      MONITORING_PUBLIC_IP: ${{ steps.monitoring-server-ec2-info.outputs.MONITORING_PUBLIC_IP }}
 
     steps:
       - name: AWS 자격 증명 세팅
