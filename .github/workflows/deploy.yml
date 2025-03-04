@@ -27,9 +27,9 @@ jobs:
             --filters 'Name=tag:Name,Values=ticket-server' 'Name=instance-state-name,Values=running' \
             --query 'Reservations[0].Instances[0].PublicIpAddress' \
             --output text)"
-            echo "TICKET_SERVER_PUBLIC_IP=${TICKET_SERVER_PUBLIC_IP}"
-            echo "TICKET_SERVER_PUBLIC_IP=${TICKET_SERVER_PUBLIC_IP}" >> $GITHUB_ENV
-            echo "::set-output name=TICKET_SERVER_PUBLIC_IP::${TICKET_SERVER_PUBLIC_IP}"
+          echo "TICKET_SERVER_PUBLIC_IP=${TICKET_SERVER_PUBLIC_IP}"
+          echo "TICKET_SERVER_PUBLIC_IP=${TICKET_SERVER_PUBLIC_IP}" >> $GITHUB_ENV
+          echo "::set-output name=TICKET_SERVER_PUBLIC_IP::${TICKET_SERVER_PUBLIC_IP}"
 
       - name: Monitoring 서버 EC2 Public IP 가져오기
         id: monitoring-server-ec2-info
