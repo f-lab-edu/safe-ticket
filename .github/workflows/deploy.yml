@@ -63,6 +63,7 @@ jobs:
         working-directory: ticket-server
 
       - name: 최신 Git 태그 가져오기
+        working-directory: ticket-server
         run: |
             git fetch --tags --force
             echo "TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo 'latest')" >> $GITHUB_ENV
