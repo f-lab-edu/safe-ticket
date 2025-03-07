@@ -66,6 +66,7 @@ jobs:
         working-directory: ticket-server
         run: |
             git fetch --tags --force
+            git checkout $(git describe --tags --abbrev=0)
             echo "TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo 'latest')" >> $GITHUB_ENV
 
       - name: Tag 변수 확인
@@ -104,6 +105,9 @@ jobs:
           key: ${{ secrets.SPRING_EC2_SSH_KEY }}
           port: 22
           script: |
+            sudo yum update -y
+            sudo yum install -y docker
+            sudo systemctl start docker
             docker pull boosterko/ticket-app:latest
             docker stop ticket-app || true
             docker rm ticket-app || true
