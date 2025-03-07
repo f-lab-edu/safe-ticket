@@ -65,9 +65,9 @@ jobs:
       - name: 최신 Git 태그 가져오기
         working-directory: ticket-server
         run: |
-            git fetch --tags --force
-            git checkout $(git describe --tags --abbrev=0)
-            echo "TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo 'latest')" >> $GITHUB_ENV
+          git fetch --tags --force
+          TAG=$(git tag --sort=-creatordate | head -n 1)
+          echo "TAG=$TAG" >> $GITHUB_ENV
 
       - name: Tag 변수 확인
         run: echo "TAG is ${{ env.TAG }}"
@@ -108,10 +108,10 @@ jobs:
             sudo yum update -y
             sudo yum install -y docker
             sudo systemctl start docker
-            docker pull boosterko/ticket-app:latest
-            docker stop ticket-app || true
-            docker rm ticket-app || true
-            docker run -d -p 8080:8080 --name ticket-app \
+            sudo docker pull boosterko/ticket-app:latest
+            sudo docker stop ticket-app || true
+            sudo docker rm ticket-app || true
+            sudo docker run -d -p 8080:8080 --name ticket-app \
               -e DB_URL=${{ secrets.DB_URL }} \
               -e DB_USERNAME=${{ secrets.DB_USERNAME }} \
               -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
