@@ -65,8 +65,8 @@ jobs:
         working-directory: ticket-server
 
       - name: TAG 설정
-      - if: startsWith(github.ref, 'refs/tags/')
-      - run: echo "TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+        if: startsWith(github.ref, 'refs/tags/')
+        run: echo "TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
 
       - name: Docker 이미지 빌드
         run: docker build -t boosterko/ticket-app:${{ env.TAG }} .
