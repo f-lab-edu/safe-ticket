@@ -104,8 +104,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-        with:
-          path: monitoring
 
       - name: 환경 변수 설정
         run: echo "MONITORING_PUBLIC_IP=${{ needs.get-ec2-info.outputs.MONITORING_PUBLIC_IP }}" >> $GITHUB_ENV
@@ -123,8 +121,8 @@ jobs:
           username: ${{ secrets.SPRING_EC2_USER }}
           key: ${{ secrets.SPRING_EC2_SSH_KEY }}
           port: 22
-          source: "./monitoring/*.yml"
-          target: "/home/${{ secrets.SPRING_EC2_USER }}/"
+          source: "monitoring/*.yml"
+          target: "/home/${{ secrets.SPRING_EC2_USER }}/monitoring"
           overwrite: true
 
       - name: 모니터링 서버 EC2에 배포
