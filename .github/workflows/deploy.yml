@@ -142,4 +142,4 @@ jobs:
             export SLACK_API_URL=${{ secrets.SLACK_API_URL }}
             docker-compose pull
             docker-compose down
-            docker-compose up -D
+            docker-compose up -d
