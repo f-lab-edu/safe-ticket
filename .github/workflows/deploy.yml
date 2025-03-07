@@ -137,8 +137,8 @@ jobs:
             sudo chmod +x /usr/local/bin/docker-compose
             sudo rm -f /usr/bin/docker-compose
             sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
-            sudo apt-get update
-            sudo apt-get install -y docker.io
+            sudo yum update -y
+            sudo yum install -y docker
             sudo systemctl start docker
             pwd
             cd /home/${{ secrets.SPRING_EC2_USER }}/monitoring
