@@ -141,11 +141,10 @@ jobs:
             sudo yum install -y docker
             sudo systemctl start docker
             sudo usermod -aG docker ${{ secrets.SPRING_EC2_USER }}
-            newgrp docker
-            pwd
+            sudo newgrp docker
             cd /home/${{ secrets.SPRING_EC2_USER }}/monitoring
             export GRAFANA_PASSWORD=${{ secrets.GRAFANA_PASSWORD }}
             export SLACK_API_URL=${{ secrets.SLACK_API_URL }}
-            docker-compose pull
-            docker-compose down
-            docker-compose up -d
+            sudo docker-compose pull
+            sudo docker-compose down
+            sudo docker-compose up -d
