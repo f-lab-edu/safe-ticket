@@ -140,6 +140,8 @@ jobs:
             sudo yum update -y
             sudo yum install -y docker
             sudo systemctl start docker
+            sudo usermod -aG docker ${{ secrets.SPRING_EC2_USER }}
+            newgrp docker
             pwd
             cd /home/${{ secrets.SPRING_EC2_USER }}/monitoring
             export GRAFANA_PASSWORD=${{ secrets.GRAFANA_PASSWORD }}
