@@ -117,7 +117,7 @@ jobs:
           username: ${{ secrets.SPRING_EC2_USER }}
           key: ${{ secrets.SPRING_EC2_SSH_KEY }}
           port: 22
-          source: "monitoring/*"
+          source: "monitoring/."
           target: "/home/ec2-user/monitoring"
           overwrite: true
 
@@ -129,7 +129,7 @@ jobs:
           key: ${{ secrets.SPRING_EC2_SSH_KEY }}
           port: 22
           script: |
-            cd monitoring
+            cd /home/ec2-user/monitoring
             export GRAFANA_PASSWORD=${{ secrets.GRAFANA_PASSWORD }}
             export SLACK_API_URL=${{ secrets.SLACK_API_URL }}
             docker-compose pull
