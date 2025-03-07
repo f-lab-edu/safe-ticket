@@ -59,7 +59,11 @@ jobs:
           distribution: 'adopt'
 
       - name: Gradle 빌드
-        run: ./gradlew build --no-daemon
+        run: ./gradlew build
+        working-directory: ticket-server
+
+      - name: 빌드 파일 확인
+        run: ls -la build/libs
         working-directory: ticket-server
 
       - name: Docker 이미지 빌드
