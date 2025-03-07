@@ -108,12 +108,6 @@ jobs:
       - name: 환경 변수 설정
         run: echo "MONITORING_PUBLIC_IP=${{ needs.get-ec2-info.outputs.MONITORING_PUBLIC_IP }}" >> $GITHUB_ENV
 
-      - name: List monitoring directory contents
-        run: |
-          ls -la ./monitoring
-          pwd
-          ls -la
-
       - name: AWS EC2로 모니터링 파일 전송
         uses: appleboy/scp-action@master
         with:
