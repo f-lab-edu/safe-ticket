@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - feature/20-add-cicd-pipeline
-    tags:
-      - 'v*.*.*'
 
 jobs:
   get-ec2-info:
@@ -64,11 +62,11 @@ jobs:
         run: ./gradlew build
         working-directory: ticket-server
 
-      - name: TAG 설정
-        run: echo "TAG=${GITHUB_REF_NAME}" >> $GITHUB_ENV
+      - name: 최신 Git 태그 가져오기
+        run: echo "TAG=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
 
       - name: Tag 변수 확인
-        run: echo "TAG is $TAG"
+        run: echo "TAG is ${{ env.TAG }}"
 
       - name: Docker 이미지 빌드
         env:
