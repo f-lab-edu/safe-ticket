@@ -117,9 +117,10 @@ jobs:
           username: ${{ secrets.SPRING_EC2_USER }}
           key: ${{ secrets.SPRING_EC2_SSH_KEY }}
           port: 22
-          source: "./monitoring/*"
+          source: "*"
           target: "/home/${{ secrets.SPRING_EC2_USER }}/"
           overwrite: true
+        working-directory: "./monitoring"
 
       - name: 모니터링 서버 EC2에 배포
         uses: appleboy/ssh-action@v1.0.3
