@@ -65,6 +65,7 @@ jobs:
         working-directory: ticket-server
 
       - name: 최신 Git 태그 가져오기
+        id: get-latest-tag
         working-directory: ticket-server
         run: |
           git fetch --tags --force
