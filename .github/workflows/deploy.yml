@@ -1,9 +1,9 @@
-name: Deploy to EC2
+name: EC2 배포(Ticket, Monitoring)
 
 on:
   push:
     branches:
-      - feature/20-add-cicd-pipeline
+      - main
 
 jobs:
   get-ec2-info:
@@ -99,11 +99,6 @@ jobs:
         run: |
           echo "TICKET_SERVER_PUBLIC_IP=${{ needs.get-ec2-info.outputs.TICKET_SERVER_PUBLIC_IP }}" >> $GITHUB_ENV
           echo "TAG=${{ needs.build-spring.outputs.TAG }}" >> $GITHUB_ENV
-
-      - name: 변수 값 확인
-        run: |
-          echo ${{ env.TICKET_SERVER_PUBLIC_IP }}
-          echo ${{ env.TAG }}
 
       - name: 티켓 서버 EC2에 배포
         uses: appleboy/ssh-action@v0.1.3
