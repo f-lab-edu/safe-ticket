@@ -70,7 +70,7 @@ jobs:
           git fetch --tags --force
           TAG=$(git tag --sort=-creatordate | head -n 1)
           echo "TAG=$TAG" >> $GITHUB_ENV
-          echo "TAG=$TAG" >> $GITHUB_OUTPUT
+          echo "::set-output name=TAG::${TAG}"
 
       - name: Docker 이미지 빌드
         env:
