@@ -1,13 +1,15 @@
 package com.safeticket.ticket.service;
 
 import com.safeticket.ticket.domain.Ticket;
+import com.safeticket.ticket.dto.AvailableTicketsDTO;
 import com.safeticket.ticket.dto.TicketDTO;
 import com.safeticket.ticket.exception.TicketsNotAvailableException;
 import com.safeticket.ticket.repository.TicketRepository;
 import jakarta.persistence.PessimisticLockException;
 import lombok.RequiredArgsConstructor;
-import org.hibernate.exception.LockAcquisitionException;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.dao.ConcurrencyFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +27,15 @@ public class TicketServiceImpl implements TicketService {
     private int expirationMinutes;
 
     @Override
+    @Cacheable("availableTickets")
+    public AvailableTicketsDTO getAvailableTickets(Long showtimeId) {
+        List<Long> ticketIds = ticketRepository.findAvailableTickets(showtimeId);
+        return AvailableTicketsDTO.builder()
+                .ticketIds(ticketIds)
+                .build();
+    }
+
+    @Override
     @Transactional
     public void reserveTickets(TicketDTO ticketDTO) {
         try {
@@ -38,7 +49,7 @@ public class TicketServiceImpl implements TicketService {
             }
 
             ticketRepository.saveAll(tickets);
-        } catch (PessimisticLockException | LockAcquisitionException e) {
+        } catch (PessimisticLockException | ConcurrencyFailureException e) {
             throw new TicketsNotAvailableException();
         }
     }
