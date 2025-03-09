@@ -1,0 +1,54 @@
+groups:
+  - name: alert-rules
+    interval: 30s  # 30초마다 평가
+
+    rules:
+      - alert: InstanceDown
+        expr: up == 0
+        for: 3m
+        labels:
+          severity: critical
+        annotations:
+            summary: "🔥서버 다운"
+            description: "서버가 3분 이상 응답하지 않습니다."
+            instance: "{{ $labels.instance }}"
+
+      - alert: HighCPUUsage
+        expr: process_cpu_usage > 0.8
+        for: 3m
+        labels:
+          severity: critical
+        annotations:
+          summary: "🔥CPU 사용량 80% 초과"
+          description: "CPU 사용률이 3분 이상 80%를 초과했습니다."
+          instance: "{{ $labels.instance }}"
+
+      - alert: HighMemoryUsage
+        expr: (sum(jvm_memory_used_bytes{area="heap"}) / sum(jvm_memory_max_bytes{area="heap"})) > 0.8
+        for: 3m
+        labels:
+          severity: critical
+        annotations:
+          summary: "🔥메모리 사용량 80% 초과"
+          description: "메모리 사용률이 3분 이상 80%를 초과했습니다."
+          instance: "{{ $labels.instance }}"
+
+      - alert: HighAvailableTicketsRequests
+        expr: sum(increase(available_tickets_requests_total[1m])) > 1000
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "⚠️조회 API 요청이 많습니다."
+          description: "api GET /tickets/available/{showtimeId} 요청이 분당 1000회 초과 발생했습니다."
+          instance: "ticket-app"
+
+      - alert: HighReservationRequests
+        expr: sum(increase(reservation_requests_total[1m])) > 1000
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "⚠️예약 API 요청이 많습니다."
+          description: "api PUT /tickets/reservations 요청이 분당 1000회 초과 발생했습니다."
+          instance: "ticket-app"
