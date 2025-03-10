@@ -163,6 +163,7 @@ jobs:
             cd /home/${{ secrets.SPRING_EC2_USER }}/monitoring
             export GRAFANA_PASSWORD=${{ secrets.GRAFANA_PASSWORD }}
             export SLACK_API_URL=${{ secrets.SLACK_API_URL }}
+            export TICKET_SERVER_PUBLIC_IP=${{ env.TICKET_SERVER_PUBLIC_IP }} 
             sudo docker-compose pull
             sudo docker-compose down
             sudo docker-compose up -d
