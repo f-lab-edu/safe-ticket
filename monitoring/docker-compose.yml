@@ -9,6 +9,8 @@ services:
       - '--config.file=/etc/prometheus/prometheus.yml'
     ports:
       - "9090:9090"
+    environment:
+      - TICKET_SERVER_PUBLIC_IP=${TICKET_SERVER_PUBLIC_IP}
     depends_on:
       - alertmanager
     networks:
@@ -21,6 +23,8 @@ services:
       - ./alertmanager.yml:/etc/alertmanager/alertmanager.yml
     ports:
       - "9093:9093"
+    environment:
+      - SLACK_API_URL=${SLACK_API_URL}
     networks:
       - monitoring
 
@@ -30,8 +34,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - GRAFANA_PASSWORD=${GRAFANA_PASSWORD}
-      - SLACK_API_URL=${SLACK_API_URL}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
     networks:
       - monitoring
 
