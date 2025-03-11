@@ -139,7 +139,7 @@ jobs:
           username: ${{ secrets.SPRING_EC2_USER }}
           key: ${{ secrets.SPRING_EC2_SSH_KEY }}
           port: 22
-          source: "monitoring/*.yml"
+          source: "monitoring/*"
           target: "/home/${{ secrets.SPRING_EC2_USER }}/"
           overwrite: true
 
