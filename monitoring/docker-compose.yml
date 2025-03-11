@@ -5,8 +5,7 @@ services:
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
       - ./alert-rules.yml:/etc/prometheus/alert-rules.yml
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
+    command: /bin/prometheus --config.file=/etc/prometheus/prometheus.yml
     ports:
       - "9090:9090"
     environment:
@@ -17,10 +16,14 @@ services:
       - monitoring
 
   alertmanager:
-    image: prom/alertmanager:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.alertmanager
     container_name: alertmanager
     volumes:
-      - ./alertmanager.yml:/etc/alertmanager/alertmanager.yml
+      - ./alertmanager.yml.template:/etc/alertmanager/alertmanager.yml.template
+      - ./alertmanager-entrypoint.sh:/alertmanager-entrypoint.sh
+    entrypoint: [ "/bin/sh", "/alertmanager-entrypoint.sh" ]
     ports:
       - "9093:9093"
     environment:
