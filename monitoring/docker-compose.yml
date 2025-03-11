@@ -23,8 +23,6 @@ services:
     container_name: alertmanager
     volumes:
       - ./alertmanager.yml.template:/etc/alertmanager/alertmanager.yml.template
-      - ./alertmanager-entrypoint.sh:/alertmanager-entrypoint.sh
-    entrypoint: [ "/bin/sh", "/alertmanager-entrypoint.sh" ]
     ports:
       - "9093:9093"
     environment:
