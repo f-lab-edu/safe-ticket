@@ -2,10 +2,10 @@ FROM alpine:latest
 
 RUN apk add --no-cache ca-certificates gettext
 
-ADD https://github.com/prometheus/prometheus/releases/download/v2.33.5/prometheus-2.33.5.linux-amd64.tar.gz /tmp/
-RUN tar -xzf /tmp/prometheus-2.33.5.linux-amd64.tar.gz -C /tmp/ && \
-    mv /tmp/prometheus-2.33.5.linux-amd64/prometheus /bin/prometheus && \
-    rm -rf /tmp/prometheus-2.33.5.linux-amd64*
+ADD https://github.com/prometheus/prometheus/releases/download/v3.2.1/prometheus-3.2.1.linux-amd64.tar.gz /tmp/
+RUN tar -xzf /tmp/prometheus-3.2.1.linux-amd64.tar.gz -C /tmp/ && \
+    mv /tmp/prometheus-3.2.1.linux-amd64/prometheus /bin/prometheus && \
+    rm -rf /tmp/prometheus-3.2.1.linux-amd64*
 
 COPY prometheus-entrypoint.sh /prometheus-entrypoint.sh
 RUN chmod +x /prometheus-entrypoint.sh
