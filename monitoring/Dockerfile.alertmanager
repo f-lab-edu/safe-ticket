@@ -7,7 +7,7 @@ RUN tar -xzf /tmp/alertmanager-0.28.1.linux-amd64.tar.gz -C /tmp/ && \
     mv /tmp/alertmanager-0.28.1.linux-amd64/alertmanager /bin/alertmanager && \
     rm -rf /tmp/alertmanager-0.28.1.linux-amd64*
 
-COPY alertmanager.yml /etc/alertmanager/alertmanager.yml
+COPY alertmanager.yml.template /etc/alertmanager/alertmanager.yml.template
 COPY alertmanager-entrypoint.sh /alertmanager-entrypoint.sh
 
 ENTRYPOINT ["/bin/sh", "/alertmanager-entrypoint.sh"]

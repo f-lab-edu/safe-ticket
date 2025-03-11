@@ -7,6 +7,7 @@ RUN tar -xzf /tmp/prometheus-3.2.1.linux-amd64.tar.gz -C /tmp/ && \
     mv /tmp/prometheus-3.2.1.linux-amd64/prometheus /bin/prometheus && \
     rm -rf /tmp/prometheus-3.2.1.linux-amd64*
 
+COPY prometheus.yml.template /etc/prometheus/prometheus.yml.template
 COPY prometheus-entrypoint.sh /prometheus-entrypoint.sh
 RUN chmod +x /prometheus-entrypoint.sh
 
