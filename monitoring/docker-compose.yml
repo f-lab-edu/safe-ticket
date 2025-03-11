@@ -1,11 +1,12 @@
 services:
   prometheus:
-    image: prom/prometheus:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.prometheus
     container_name: prometheus
     volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus.yml.template:/etc/prometheus/prometheus.yml.template
       - ./alert-rules.yml:/etc/prometheus/alert-rules.yml
-    command: /bin/prometheus --config.file=/etc/prometheus/prometheus.yml
     ports:
       - "9090:9090"
     environment:
