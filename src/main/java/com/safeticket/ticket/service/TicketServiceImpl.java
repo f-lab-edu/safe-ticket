@@ -27,8 +27,17 @@ public class TicketServiceImpl implements TicketService {
     private int expirationMinutes;
 
     @Override
-    @Cacheable("availableTickets")
+    @Cacheable("ehcache_availableTickets")
     public AvailableTicketsDTO getAvailableTickets(Long showtimeId) {
+        List<Long> ticketIds = ticketRepository.findAvailableTickets(showtimeId);
+        return AvailableTicketsDTO.builder()
+                .ticketIds(ticketIds)
+                .build();
+    }
+
+    @Override
+    @Cacheable(cacheNames = "redis_availableTickets", key = "#showtimeId", cacheResolver = "cacheResolver")
+    public AvailableTicketsDTO getAvailableTickets_redis(Long showtimeId) {
         List<Long> ticketIds = ticketRepository.findAvailableTickets(showtimeId);
         return AvailableTicketsDTO.builder()
                 .ticketIds(ticketIds)
