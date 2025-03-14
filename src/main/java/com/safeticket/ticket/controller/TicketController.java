@@ -24,9 +24,9 @@ public class TicketController {
     }
 
     @TrackMetrics("available_tickets_requests_total")
-    @GetMapping("/available_redis/{showtimeId}")
+    @GetMapping("/available-redis/{showtimeId}")
     public ResponseEntity<AvailableTicketsDTO> getAvailableTickets_redis(@PathVariable Long showtimeId) {
-        return ResponseEntity.ok(ticketService.getAvailableTickets_redis(showtimeId));
+        return ResponseEntity.ok(ticketService.getAvailableTicketsRedis(showtimeId));
     }
 
     @TrackMetrics("reservation_requests_total")

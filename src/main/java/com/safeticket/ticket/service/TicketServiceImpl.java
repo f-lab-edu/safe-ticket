@@ -37,7 +37,7 @@ public class TicketServiceImpl implements TicketService {
 
     @Override
     @Cacheable(cacheNames = "redis_availableTickets", key = "#showtimeId", cacheResolver = "cacheResolver")
-    public AvailableTicketsDTO getAvailableTickets_redis(Long showtimeId) {
+    public AvailableTicketsDTO getAvailableTicketsRedis(Long showtimeId) {
         List<Long> ticketIds = ticketRepository.findAvailableTickets(showtimeId);
         return AvailableTicketsDTO.builder()
                 .ticketIds(ticketIds)

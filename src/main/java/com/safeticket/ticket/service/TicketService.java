@@ -9,6 +9,6 @@ import java.util.List;
 public interface TicketService {
 
     AvailableTicketsDTO getAvailableTickets(Long showtimeId);
-    AvailableTicketsDTO getAvailableTickets_redis(Long showtimeId);
+    AvailableTicketsDTO getAvailableTicketsRedis(Long showtimeId);
     void reserveTickets(TicketDTO ticketDTO);
 }
