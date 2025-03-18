@@ -1,20 +1,25 @@
 package com.safeticket.ticket.service;
 
-import com.safeticket.ticket.domain.Ticket;
+import com.safeticket.common.util.RedisKeyUtil;
+import com.safeticket.ticket.domain.TicketStatus;
 import com.safeticket.ticket.dto.AvailableTicketsDTO;
 import com.safeticket.ticket.dto.TicketDTO;
 import com.safeticket.ticket.exception.TicketsNotAvailableException;
 import com.safeticket.ticket.repository.TicketRepository;
-import jakarta.persistence.PessimisticLockException;
 import lombok.RequiredArgsConstructor;
+import org.redisson.RedissonMultiLock;
+import org.redisson.api.RBatch;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.dao.ConcurrencyFailureException;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 
 @Service
@@ -22,49 +27,64 @@ import java.util.List;
 public class TicketServiceImpl implements TicketService {
 
     private final TicketRepository ticketRepository;
+    private final RedisTemplate<String, Object> redisTemplate;
+    private final RedissonClient redissonClient;
 
-    @Value("${ticket.expiration.minutes}")
-    private int expirationMinutes;
+    @Value("${redis.lock.ticket.reservation.wait-time-seconds}")
+    private long waitTimeSeconds;
+
+    @Value("${redis.lock.ticket.reservation.lease-time-seconds}")
+    private long leaseTimeSeconds;
 
     @Override
-    @Cacheable("ehcache_availableTickets")
-    public AvailableTicketsDTO getAvailableTickets(Long showtimeId) {
-        List<Long> ticketIds = ticketRepository.findAvailableTickets(showtimeId);
+    @Cacheable(cacheNames = "redis_showtimeTickets", key = "#showtimeId", cacheResolver = "cacheResolver")
+    public AvailableTicketsDTO getTickets(Long showtimeId) {
+        List<Long> tickets = ticketRepository.findAvailableTickets(showtimeId);
+        cacheTicketInRedis(tickets);
         return AvailableTicketsDTO.builder()
-                .ticketIds(ticketIds)
+                .ticketIds(tickets)
                 .build();
     }
 
-    @Override
-    @Cacheable(cacheNames = "redis_availableTickets", key = "#showtimeId", cacheResolver = "cacheResolver")
-    public AvailableTicketsDTO getAvailableTicketsRedis(Long showtimeId) {
-        List<Long> ticketIds = ticketRepository.findAvailableTickets(showtimeId);
-        return AvailableTicketsDTO.builder()
-                .ticketIds(ticketIds)
-                .build();
+    public void cacheTicketInRedis(List<Long> ticketIds) {
+        RBatch batch = redissonClient.createBatch();
+        for (Long ticketId : ticketIds) {
+            String redisKey = RedisKeyUtil.getTicketKey(ticketId);
+            batch.getBucket(redisKey).setAsync(TicketStatus.AVAILABLE.name());
+        }
+        batch.execute();
     }
 
     @Override
-    @Transactional
     public void reserveTickets(TicketDTO ticketDTO) {
-        try {
-            List<Ticket> tickets = ticketRepository.findAvailableTicketsWithLock(ticketDTO.getTicketIds());
-            validateTickets(tickets, ticketDTO.getTicketIds());
+        List<RLock> locks = new ArrayList<>();
+        for (Long ticketId : ticketDTO.getTicketIds()) {
+            String redisKey = RedisKeyUtil.getTicketKey(ticketId);
 
-            Duration expirationTime = Duration.ofMinutes(expirationMinutes);
-
-            for(Ticket ticket : tickets) {
-                ticket.reserve(ticketDTO.getUserId(), expirationTime);
+            if (!redisTemplate.hasKey(redisKey)) {
+                throw new TicketsNotAvailableException();
             }
 
-            ticketRepository.saveAll(tickets);
-        } catch (PessimisticLockException | ConcurrencyFailureException e) {
-            throw new TicketsNotAvailableException();
+            String lockKey = RedisKeyUtil.getLockTicketKey(ticketId);
+            RLock lock = redissonClient.getLock(lockKey);
+            locks.add(lock);
         }
-    }
 
-    private void validateTickets(List<Ticket> tickets, List<Long> ticketIds) {
-        if(tickets.size() != ticketIds.size()) {
+        RLock[] lockArray = locks.toArray(new RLock[0]);
+        RedissonMultiLock multiLock = new RedissonMultiLock(lockArray);
+
+        try {
+            boolean available = multiLock.tryLock(waitTimeSeconds, leaseTimeSeconds, TimeUnit.SECONDS);
+            if (!available) {
+                throw new TicketsNotAvailableException();
+            }
+
+            for (Long ticketId : ticketDTO.getTicketIds()) {
+                String reservationKey = RedisKeyUtil.getReservationLockKey(ticketDTO.getUserId(), ticketId);
+                redisTemplate.opsForValue().set(reservationKey, TicketStatus.RESERVED.name(), Duration.ofSeconds(leaseTimeSeconds));
+            }
+        } catch (InterruptedException e) {
+            multiLock.unlock();
             throw new TicketsNotAvailableException();
         }
     }
