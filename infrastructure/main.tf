@@ -20,11 +20,6 @@ variable "github_actions_ips" {
   default = ["<GitHub Actions IP>/32"]
 }
 
-variable "create_alb" {
-  type    = bool
-  default = true
-}
-
 # 키페어 설정
 resource "aws_key_pair" "ticket_server_key" {
    key_name   = "ticket-server-key"
@@ -162,7 +157,6 @@ resource "aws_security_group_rule" "monitoring_to_spring" {
 
 # ALB 생성
 resource "aws_lb" "ticket_lb" {
-  count              = var.create_alb ? 1 : 0
   name               = "ticket-lb"
   internal           = false
   load_balancer_type = "application"
