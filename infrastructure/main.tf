@@ -17,7 +17,12 @@ variable "instances" {
 
 variable "github_actions_ips" {
   type    = list(string)
-  default = []
+  default = ["<GitHub Actions IP>/32"]
+}
+
+variable "create_alb" {
+  type    = bool
+  default = true
 }
 
 # 키페어 설정
@@ -56,6 +61,13 @@ resource "aws_security_group" "alb_sg" {
     to_port     = 80
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port       = 22
+    to_port         = 22
+    protocol        = "tcp"
+    cidr_blocks     = var.github_actions_ips
   }
 
   egress {
@@ -150,11 +162,16 @@ resource "aws_security_group_rule" "monitoring_to_spring" {
 
 # ALB 생성
 resource "aws_lb" "ticket_lb" {
+  count              = var.create_alb ? 1 : 0
   name               = "ticket-lb"
   internal           = false
   load_balancer_type = "application"
   security_groups    = [aws_security_group.alb_sg.id]
   subnets           = [data.aws_subnet.subnet_a.id, data.aws_subnet.subnet_c.id]
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 # ALB Target Group (Spring 서버 대상)
