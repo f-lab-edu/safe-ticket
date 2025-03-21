@@ -26,6 +26,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Create SSH key pair
+        run: |
+          mkdir -p infrastructure/keys
+          ssh-keygen -t rsa -b 4096 -f ./infrastructure/keys/ticket-server -N ""
+          mv ./infrastructure/keys/ticket-server.pub ./infrastructure/ticket-server.pub
+
       - name: Terraform 설치
         uses: hashicorp/setup-terraform@v1
         with:
