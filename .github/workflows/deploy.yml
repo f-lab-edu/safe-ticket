@@ -18,7 +18,7 @@ jobs:
           IP=$(curl -s ifconfig.me)
           echo "::set-output name=runner-ip::$IP"
 
-  deploy:
+  infra-deploy:
     runs-on: ubuntu-latest
     needs: get-ip
 
@@ -26,7 +26,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Create SSH key pair
+      - name: SSH key pair 생성
         run: |
           mkdir -p infrastructure/keys
           ssh-keygen -t rsa -b 4096 -f ./infrastructure/keys/ticket-server -N ""
@@ -38,7 +38,7 @@ jobs:
           terraform_wrapper: 'false'
 
       - name: Initialize Terraform
-        run: terraform init
+        run: terraform init 생성
         working-directory: infrastructure
 
       - name: Apply Terraform
@@ -50,6 +50,7 @@ jobs:
 
   get-ec2-info:
     runs-on: ubuntu-latest
+    needs: infra-deploy
     outputs:
       TICKET_SERVER_PUBLIC_IP: ${{ steps.ticket-server-ec2-info.outputs.TICKET_SERVER_PUBLIC_IP }}
       MONITORING_PUBLIC_IP: ${{ steps.monitoring-server-ec2-info.outputs.MONITORING_PUBLIC_IP }}
