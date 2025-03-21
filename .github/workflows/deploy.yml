@@ -3,9 +3,45 @@ name: EC2 배포(Ticket, Monitoring)
 on:
   push:
     branches:
-      - main
+      - feature/20-add-cicd
 
 jobs:
+  get-ip:
+    runs-on: ubuntu-latest
+    outputs:
+      runner-ip: ${{ steps.get-ip.outputs.runner-ip }}
+
+    steps:
+      - name: CI/CD Public IP 얻기
+        id: get-ip
+        run: |
+          IP=$(curl -s ifconfig.me)
+          echo "::set-output name=runner-ip::$IP"
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: get-ip
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Terraform 설치
+        uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_wrapper: 'false'
+
+      - name: Initialize Terraform
+        run: terraform init
+        working-directory: infrastructure
+
+      - name: Apply Terraform
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: terraform apply -auto-approve -var "github_actions_ips=[${{ needs.get-ip.outputs.runner-ip }}/32]"
+        working-directory: infrastructure
+
   get-ec2-info:
     runs-on: ubuntu-latest
     outputs:
