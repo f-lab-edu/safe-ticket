@@ -37,11 +37,11 @@ jobs:
         with:
           terraform_wrapper: 'false'
 
-      - name: Initialize Terraform
-        run: terraform init 생성
+      - name: Terraform 초기화
+        run: terraform init
         working-directory: infrastructure
 
-      - name: Apply Terraform
+      - name: Terraform 실행
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
