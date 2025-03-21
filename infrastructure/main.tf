@@ -46,8 +46,17 @@ data "aws_subnet" "subnet_c" {
   }
 }
 
+# 기존 보안 그룹을 참조
+data "aws_security_group" "existing_alb_sg" {
+  filter {
+    name   = "group-name"
+    values = ["alb-secure-group"]
+  }
+}
+
 # ALB 보안 그룹
 resource "aws_security_group" "alb_sg" {
+  count  = length(data.aws_security_group.existing_alb_sg.ids) == 0 ? 1 : 0
   vpc_id = data.aws_vpc.default.id
   name   = "alb-secure-group"
 
