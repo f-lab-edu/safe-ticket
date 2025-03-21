@@ -209,9 +209,9 @@ resource "aws_instance" "servers" {
 
 # Spring 서버를 ALB Target Group에 등록
 resource "aws_lb_target_group_attachment" "spring_attachment" {
-  count            = 2
+  count            = length(aws_instance.servers)
   target_group_arn = aws_lb_target_group.ticket_tg.arn
-  target_id        = aws_instance.servers[0].id
+  target_id        = aws_instance.servers[count.index].id
   port             = 8080
 }
 
