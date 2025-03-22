@@ -170,7 +170,7 @@ resource "aws_instance" "servers" {
   count         = length(var.instances)
   ami           = var.instances[count.index].ami
   instance_type = var.instances[count.index].instance_type
-  key_name      = "ticket-server-key"
+  key_name      = "ticket-server"
   security_groups = [aws_security_group.allow_prometheus_grafana_spring.name]
 
   tags = {
