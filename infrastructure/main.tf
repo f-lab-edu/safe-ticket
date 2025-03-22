@@ -16,6 +16,11 @@ variable "instances" {
   ]
 }
 
+variable "github_actions_ips" {
+  description = "Github Action IP"
+  type        = list(string)
+}
+
 # VPC 정보 가져오기
 data "aws_vpc" "default" {
   default = true
