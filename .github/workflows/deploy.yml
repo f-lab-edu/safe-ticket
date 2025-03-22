@@ -70,7 +70,7 @@ jobs:
           TICKET_SERVER_PUBLIC_IPS=$(aws ec2 describe-instances \
             --filters 'Name=tag:Name,Values=spring-server' 'Name=instance-state-name,Values=running' \
             --query 'Reservations[*].Instances[*].PublicIpAddress' \
-            --output text)
+            --output text | tr '\n' ',' | sed 's/,$//')
           echo "TICKET_SERVER_PUBLIC_IPS=${TICKET_SERVER_PUBLIC_IPS}"
           echo "TICKET_SERVER_PUBLIC_IPS=${TICKET_SERVER_PUBLIC_IPS}" >> $GITHUB_ENV
           echo "::set-output name=TICKET_SERVER_PUBLIC_IPS::${TICKET_SERVER_PUBLIC_IPS}"
@@ -151,7 +151,8 @@ jobs:
           key: ${{ secrets.SPRING_EC2_SSH_KEY }}
           port: 22
           script: |
-            for IP in ${{ env.TICKET_SERVER_PUBLIC_IPS }}; do
+            IFS=',' read -r -a IP_ARRAY <<< "${{ env.TICKET_SERVER_PUBLIC_IPS }}"
+            for IP in "${IP_ARRAY[@]}"; do
               ssh -i ${{ secrets.SPRING_EC2_SSH_KEY }} -o StrictHostKeyChecking=no ${{ secrets.SPRING_EC2_USER }}@$IP << 'EOF'
                 sudo yum update -y
                 sudo yum install -y docker
