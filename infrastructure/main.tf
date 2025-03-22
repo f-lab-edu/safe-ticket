@@ -100,7 +100,7 @@ resource "aws_lb_target_group" "ticket_tg" {
 
 # ALB Target Group Attachment
 resource "aws_lb_target_group_attachment" "spring_server_attachment" {
-  for_each = { for idx, instance in aws_instance.servers : idx => instance if instance.tags["Name"] == "spring-server"
+  for_each = { for idx, instance in aws_instance.servers : idx => instance if instance.tags["Name"] == "spring-server" }
   target_group_arn = aws_lb_target_group.ticket_tg.arn
   target_id        = each.value.id
   port             = 8080
