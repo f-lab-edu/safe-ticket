@@ -53,7 +53,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: infra-deploy
     outputs:
-      TICKET_SERVER_PUBLIC_IP: ${{ steps.ticket-server-ec2-info.outputs.TICKET_SERVER_PUBLIC_IP }}
+      TICKET_SERVER_PUBLIC_IPS: ${{ steps.ticket-server-ec2-info.outputs.TICKET_SERVER_PUBLIC_IPS }}
       MONITORING_PUBLIC_IP: ${{ steps.monitoring-server-ec2-info.outputs.MONITORING_PUBLIC_IP }}
 
     steps:
@@ -69,11 +69,11 @@ jobs:
         run: |
           TICKET_SERVER_PUBLIC_IP=$(aws ec2 describe-instances \
             --filters 'Name=tag:Name,Values=spring-server' 'Name=instance-state-name,Values=running' \
-            --query 'Reservations[0].Instances[0].PublicIpAddress' \
+            --query 'Reservations[*].Instances[*].PublicIpAddress' \
             --output text)
-          echo "TICKET_SERVER_PUBLIC_IP=${TICKET_SERVER_PUBLIC_IP}"
-          echo "TICKET_SERVER_PUBLIC_IP=${TICKET_SERVER_PUBLIC_IP}" >> $GITHUB_ENV
-          echo "::set-output name=TICKET_SERVER_PUBLIC_IP::${TICKET_SERVER_PUBLIC_IP}"
+          echo "TICKET_SERVER_PUBLIC_IPS=${TICKET_SERVER_PUBLIC_IPS}"
+          echo "TICKET_SERVER_PUBLIC_IPS=${TICKET_SERVER_PUBLIC_IPS}" >> $GITHUB_ENV
+          echo "::set-output name=TICKET_SERVER_PUBLIC_IPS::${TICKET_SERVER_PUBLIC_IPS}"
 
       - name: Monitoring 서버 EC2 Public IP 가져오기
         id: monitoring-server-ec2-info
@@ -146,22 +146,24 @@ jobs:
       - name: 티켓 서버 EC2에 배포
         uses: appleboy/ssh-action@v0.1.3
         with:
-          host: ${{ env.TICKET_SERVER_PUBLIC_IP }}
+          host: ${{ env.TICKET_SERVER_PUBLIC_IPS }}
           username: ${{ secrets.SPRING_EC2_USER }}
           key: ${{ secrets.SPRING_EC2_SSH_KEY }}
           port: 22
           script: |
-            sudo yum update -y
-            sudo yum install -y docker
-            sudo systemctl start docker
-            sudo docker pull boosterko/ticket-app:${{ env.TAG }}
-            sudo docker stop ticket-app || true
-            sudo docker rm ticket-app || true
-            sudo docker run -d -p 8080:8080 --name ticket-app \
-              -e DB_URL=${{ secrets.DB_URL }} \
-              -e DB_USERNAME=${{ secrets.DB_USERNAME }} \
-              -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
-              boosterko/ticket-app:${{ env.TAG }}
+            for IP in ${{ env.TICKET_SERVER_PUBLIC_IPS }}; do
+              ssh -i ${{ secrets.SPRING_EC2_SSH_KEY }} -o StrictHostKeyChecking=no ${{ secrets.SPRING_EC2_USER }}@$IP << 'EOF'
+                sudo yum update -y
+                sudo yum install -y docker
+                sudo systemctl start docker
+                sudo docker pull boosterko/ticket-app:${{ env.TAG }}
+                sudo docker stop ticket-app || true
+                sudo docker rm ticket-app || true
+                sudo docker run -d -p 8080:8080 --name ticket-app \
+                  -e DB_URL=${{ secrets.DB_URL }} \
+                  -e DB_USERNAME=${{ secrets.DB_USERNAME }} \
+                  -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
+                  boosterko/ticket-app:${{ env.TAG }}
 
   deploy-monitoring:
     runs-on: ubuntu-latest
