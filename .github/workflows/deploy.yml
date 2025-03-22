@@ -153,7 +153,7 @@ jobs:
           script: |
             IFS=',' read -r -a IP_ARRAY <<< "${{ env.TICKET_SERVER_PUBLIC_IPS }}"
             for IP in "${IP_ARRAY[@]}"; do
-              ssh -i ${{ secrets.SPRING_EC2_SSH_KEY }} -o StrictHostKeyChecking=no ${{ secrets.SPRING_EC2_USER }}@$IP << 'EOF'
+              ssh -i ${{ secrets.SPRING_EC2_SSH_KEY }} -o StrictHostKeyChecking=no ${{ secrets.SPRING_EC2_USER }}@$IP << EOF
                 sudo yum update -y
                 sudo yum install -y docker
                 sudo systemctl start docker
@@ -165,6 +165,8 @@ jobs:
                   -e DB_USERNAME=${{ secrets.DB_USERNAME }} \
                   -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
                   boosterko/ticket-app:${{ env.TAG }}
+              EOF 
+            done
 
   deploy-monitoring:
     runs-on: ubuntu-latest
