@@ -214,7 +214,7 @@ jobs:
             for idx in $(seq 1 $(echo ${{ env.TICKET_SERVER_PUBLIC_IPS }} | tr ',' '\n' | wc -l)); do
               ip=$(echo ${{ env.TICKET_SERVER_PUBLIC_IPS }} | cut -d',' -f$idx)
               echo "TICKET_SERVER_PUBLIC_IP_$idx=$ip" >> .env
-            donee
+            done
             sudo docker-compose pull
             sudo docker-compose down
             sudo docker-compose up -d
