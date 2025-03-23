@@ -210,7 +210,6 @@ jobs:
             cd /home/${{ secrets.SPRING_EC2_USER }}/monitoring
             echo "GRAFANA_PASSWORD=${{ secrets.GRAFANA_PASSWORD }}" > .env
             echo "SLACK_API_URL=${{ secrets.SLACK_API_URL }}" >> .env
-#            echo "TICKET_SERVER_PUBLIC_IP=${{ env.TICKET_SERVER_PUBLIC_IP }}" >> .env
             for idx in $(seq 1 $(echo ${{ env.TICKET_SERVER_PUBLIC_IPS }} | tr ',' '\n' | wc -l)); do
               ip=$(echo ${{ env.TICKET_SERVER_PUBLIC_IPS }} | cut -d',' -f$idx)
               echo "TICKET_SERVER_PUBLIC_IP_$idx=$ip" >> .env
