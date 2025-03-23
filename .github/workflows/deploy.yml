@@ -144,6 +144,7 @@ jobs:
 
       - name: SSH 키 생성
         run: |
+          mkdir -p infrastructure/keys
           ssh-keygen -t rsa -b 4096 -f ./infrastructure/keys/ticket-server -N ""
           mv ./infrastructure/keys/ticket-server ./infrastructure/keys/ticket-server.pem
           chmod 400 ./infrastructure/keys/ticket-server.pem
