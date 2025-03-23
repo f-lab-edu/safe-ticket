@@ -155,6 +155,7 @@ jobs:
           for idx in $(seq 1 $(echo ${{ env.TICKET_SERVER_PUBLIC_IPS }} | tr ',' '\n' | wc -l)); do
             ip=$(echo ${{ env.TICKET_SERVER_PUBLIC_IPS }} | cut -d',' -f$idx)
             echo "Deploying to $ip"
+            ssh-keyscan -H $ip >> ~/.ssh/known_hosts
             ssh -i ./infrastructure/keys/ticket-server.pem ${{ secrets.SPRING_EC2_USER }}@$ip -p 22 \
               "sudo yum update -y && \
                sudo yum install -y docker && \
