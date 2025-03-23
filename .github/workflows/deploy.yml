@@ -135,9 +135,6 @@ jobs:
   deploy-spring:
     runs-on: ubuntu-latest
     needs: [build-spring, get-ec2-info]
-    strategy:
-      matrix:
-        ip: ${{ fromJson(needs.get-ec2-info.outputs.TICKET_SERVER_PUBLIC_IPS) }}
 
     steps:
       - name: 환경 변수 설정
@@ -146,23 +143,23 @@ jobs:
           echo "TAG=${{ needs.build-spring.outputs.TAG }}" >> $GITHUB_ENV
 
       - name: 티켓 서버 EC2에 배포
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ matrix.ip }}
-          username: ${{ secrets.SPRING_EC2_USER }}
-          key: ${{ secrets.SPRING_EC2_SSH_KEY }}
-          script: |
-            sudo yum update -y
-            sudo yum install -y docker
-            sudo systemctl start docker
-            sudo docker pull boosterko/ticket-app:${{ env.TAG }}
-            sudo docker stop ticket-app || true
-            sudo docker rm ticket-app || true
-            sudo docker run -d -p 8080:8080 --name ticket-app \
-              -e DB_URL=${{ secrets.DB_URL }} \
-              -e DB_USERNAME=${{ secrets.DB_USERNAME }} \
-              -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
-              boosterko/ticket-app:${{ env.TAG }}
+        run: |
+          for idx in $(seq 1 $(echo ${{ env.TICKET_SERVER_PUBLIC_IPS }} | tr ',' '\n' | wc -l)); do
+            ip=$(echo ${{ env.TICKET_SERVER_PUBLIC_IPS }} | cut -d',' -f$idx)
+            echo "Deploying to $ip"
+            ssh -o StrictHostKeyChecking=no -i ${{ secrets.SPRING_EC2_SSH_KEY }} ${{ secrets.SPRING_EC2_USER }}@$ip \
+              "sudo yum update -y && \
+               sudo yum install -y docker && \
+               sudo systemctl start docker && \
+               sudo docker pull boosterko/ticket-app:${{ env.TAG }} && \
+               sudo docker stop ticket-app || true && \
+               sudo docker rm ticket-app || true && \
+               sudo docker run -d -p 8080:8080 --name ticket-app \
+                 -e DB_URL=${{ secrets.DB_URL }} \
+                 -e DB_USERNAME=${{ secrets.DB_USERNAME }} \
+                 -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
+                 boosterko/ticket-app:${{ env.TAG }}"
+          done
 
   deploy-monitoring:
     runs-on: ubuntu-latest
