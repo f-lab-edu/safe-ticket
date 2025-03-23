@@ -148,19 +148,18 @@ jobs:
           IFS=',' read -r -a IP_ARRAY <<< "${{ env.TICKET_SERVER_PUBLIC_IPS }}"
           for IP in "${IP_ARRAY[@]}"; do
             echo "Deploying to $IP..."
-            ssh -i ${{ secrets.SPRING_EC2_SSH_KEY }} -o StrictHostKeyChecking=no ${{ secrets.SPRING_EC2_USER }}@$IP <<EOF
-              sudo yum update -y
-              sudo yum install -y docker
-              sudo systemctl start docker
-              sudo docker pull boosterko/ticket-app:${{ env.TAG }}
-              sudo docker stop ticket-app || true
-              sudo docker rm ticket-app || true
+            ssh -i ${{ secrets.SPRING_EC2_SSH_KEY }} -o StrictHostKeyChecking=no ${{ secrets.SPRING_EC2_USER }}@$IP "
+              sudo yum update -y && \
+              sudo yum install -y docker && \
+              sudo systemctl start docker && \
+              sudo docker pull boosterko/ticket-app:${{ env.TAG }} && \
+              sudo docker stop ticket-app || true && \
+              sudo docker rm ticket-app || true && \
               sudo docker run -d -p 8080:8080 --name ticket-app \
                 -e DB_URL=${{ secrets.DB_URL }} \
                 -e DB_USERNAME=${{ secrets.DB_USERNAME }} \
                 -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
-                boosterko/ticket-app:${{ env.TAG }}
-  EOF
+                boosterko/ticket-app:${{ env.TAG }}"
           done
 
   deploy-monitoring:
