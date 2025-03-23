@@ -142,12 +142,18 @@ jobs:
           echo "TICKET_SERVER_PUBLIC_IPS=${{ needs.get-ec2-info.outputs.TICKET_SERVER_PUBLIC_IPS }}" >> $GITHUB_ENV
           echo "TAG=${{ needs.build-spring.outputs.TAG }}" >> $GITHUB_ENV
 
+      - name: SSH 키 생성
+        run: |
+          ssh-keygen -t rsa -b 4096 -f ./infrastructure/keys/ticket-server -N ""
+          mv ./infrastructure/keys/ticket-server ./infrastructure/keys/ticket-server.pem
+          chmod 400 ./infrastructure/keys/ticket-server.pem
+
       - name: 티켓 서버 EC2에 배포
         run: |
           for idx in $(seq 1 $(echo ${{ env.TICKET_SERVER_PUBLIC_IPS }} | tr ',' '\n' | wc -l)); do
             ip=$(echo ${{ env.TICKET_SERVER_PUBLIC_IPS }} | cut -d',' -f$idx)
             echo "Deploying to $ip"
-            ssh -o StrictHostKeyChecking=no -i ${{ secrets.SPRING_EC2_SSH_KEY }} ${{ secrets.SPRING_EC2_USER }}@$ip \
+            ssh -o StrictHostKeyChecking=no -i ./infrastructure/keys/ticket-server.pem ${{ secrets.SPRING_EC2_USER }}@$ip \
               "sudo yum update -y && \
                sudo yum install -y docker && \
                sudo systemctl start docker && \
