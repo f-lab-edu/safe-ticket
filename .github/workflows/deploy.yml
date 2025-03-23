@@ -147,14 +147,15 @@ jobs:
           mkdir -p infrastructure/keys
           ssh-keygen -t rsa -b 4096 -f ./infrastructure/keys/ticket-server -N ""
           mv ./infrastructure/keys/ticket-server ./infrastructure/keys/ticket-server.pem
-          chmod 400 ./infrastructure/keys/ticket-server.pem
 
       - name: 티켓 서버 EC2에 배포
         run: |
+          chmod 400 ./infrastructure/keys/ticket-server.pem
+          
           for idx in $(seq 1 $(echo ${{ env.TICKET_SERVER_PUBLIC_IPS }} | tr ',' '\n' | wc -l)); do
             ip=$(echo ${{ env.TICKET_SERVER_PUBLIC_IPS }} | cut -d',' -f$idx)
             echo "Deploying to $ip"
-            ssh -o StrictHostKeyChecking=no -i ./infrastructure/keys/ticket-server.pem ${{ secrets.SPRING_EC2_USER }}@$ip \
+            ssh -i ./infrastructure/keys/ticket-server.pem ${{ secrets.SPRING_EC2_USER }}@$ip -p 22 \
               "sudo yum update -y && \
                sudo yum install -y docker && \
                sudo systemctl start docker && \
