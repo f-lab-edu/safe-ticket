@@ -145,8 +145,10 @@ jobs:
       - name: SSH 키 생성
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/ticket-server.pem
-          chmod 400 ~/.ssh/ticket-server.pem
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" | sed 's/\\n/\n/g' > ~/.ssh/ticket-server.pem
+          chmod 600 ~/.ssh/ticket-server.pem
+          eval "$(ssh-agent -s)"
+          ssh-add ~/.ssh/ticket-server.pem
 
       - name: 티켓 서버 EC2에 배포
         run: |
