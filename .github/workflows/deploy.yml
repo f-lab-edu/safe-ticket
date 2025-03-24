@@ -142,21 +142,10 @@ jobs:
           echo "TICKET_SERVER_PUBLIC_IPS=${{ needs.get-ec2-info.outputs.TICKET_SERVER_PUBLIC_IPS }}" >> $GITHUB_ENV
           echo "TAG=${{ needs.build-spring.outputs.TAG }}" >> $GITHUB_ENV
 
-      - name: OpenSSH 클라이언트 업그레이드
-        run: |
-          echo "🔄 Updating package lists..."
-          sudo apt update
-
-          echo "🚀 Upgrading OpenSSH client..."
-          sudo apt upgrade -y openssh-client
-
-          echo "🔍 Checking OpenSSH version..."
-          ssh -V
-
       - name: SSH 키 생성
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" | sed 's/\\n/\n/g' > ~/.ssh/ticket-server.pem
+          echo "${{ secrets.SSH_PRIVATE_KEY_B64 }}" | base64 --decode > ~/.ssh/ticket-server.pem
           chmod 600 ~/.ssh/ticket-server.pem
           eval "$(ssh-agent -s)"
           ssh-add ~/.ssh/ticket-server.pem
