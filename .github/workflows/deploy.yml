@@ -70,7 +70,7 @@ jobs:
           TICKET_SERVER_PUBLIC_IPS=$(aws ec2 describe-instances \
             --filters 'Name=tag:Name,Values=spring-server' 'Name=instance-state-name,Values=running' \
             --query 'Reservations[*].Instances[*].PublicIpAddress' \
-            --output json | jq -r '.[] | join(",")')
+            --output json | jq -r 'flatten | join(",")')
           echo "TICKET_SERVER_PUBLIC_IPS=${TICKET_SERVER_PUBLIC_IPS}"
           echo "::set-output name=TICKET_SERVER_PUBLIC_IPS::${TICKET_SERVER_PUBLIC_IPS}"
 

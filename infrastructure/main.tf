@@ -94,7 +94,7 @@ resource "aws_lb" "ticket_lb" {
   internal           = false
   load_balancer_type = "application"
   security_groups    = [aws_security_group.alb_sg.id]
-  subnets           = [data.aws_subnet.subnet_a.id, data.aws_subnet.subnet_c.id]
+  subnets            = [data.aws_subnet.subnet_a.id, data.aws_subnet.subnet_c.id]
 }
 
 # ALB Target Group
@@ -103,6 +103,15 @@ resource "aws_lb_target_group" "ticket_tg" {
   port     = 8080
   protocol = "HTTP"
   vpc_id   = data.aws_vpc.default.id
+
+   health_check {
+      path                = "/health"
+      interval            = 30
+      timeout             = 5
+      healthy_threshold   = 2
+      unhealthy_threshold = 2
+      matcher             = "200"
+   }
 }
 
 # ALB Target Group Attachment
