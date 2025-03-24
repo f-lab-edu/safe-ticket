@@ -145,12 +145,11 @@ jobs:
       - name: SSH 키 생성
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY_B64 }}" | base64 --decode > ~/.ssh/ticket-server.pem
+          echo "${{ secrets.SPRING_EC2_SSH_KEY }}" > ~/.ssh/ticket-server.pem
           chmod 600 ~/.ssh/ticket-server.pem
           eval "$(ssh-agent -s)"
           ssh-add ~/.ssh/ticket-server.pem
           cat -A ~/.ssh/ticket-server.pem  # 개행 문자 확인
-          cat ~/.ssh/ticket-server.pem | base64
 
       - name: 티켓 서버 EC2에 배포
         run: |
