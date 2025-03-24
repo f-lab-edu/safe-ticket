@@ -70,7 +70,14 @@ resource "aws_security_group" "ec2_sg" {
     from_port       = 8080
     to_port         = 8080
     protocol        = "tcp"
-    security_groups = [aws_security_group.alb_sg.id] # ALB에서만 허용
+    security_groups = [aws_security_group.alb_sg.id]
+  }
+
+  ingress {
+    from_port       = 8080
+    to_port         = 8080
+    protocol        = "tcp"
+    security_groups = [aws_security_group.allow_prometheus_grafana_spring.id]
   }
 
   ingress {
