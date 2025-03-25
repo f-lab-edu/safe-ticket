@@ -168,8 +168,22 @@ resource "aws_security_group" "allow_prometheus_grafana_spring" {
   }
 
   ingress {
+    from_port   = 12000
+    to_port     = 12009
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
     from_port   = 8300
     to_port     = 8300
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 16001
+    to_port     = 16001
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
