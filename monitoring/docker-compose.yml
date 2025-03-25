@@ -10,7 +10,8 @@ services:
     ports:
       - "9090:9090"
     environment:
-      - TICKET_SERVER_PUBLIC_IP=${TICKET_SERVER_PUBLIC_IP}
+      - TICKET_SERVER_PUBLIC_IP_1=${TICKET_SERVER_PUBLIC_IP_1}
+      - TICKET_SERVER_PUBLIC_IP_2=${TICKET_SERVER_PUBLIC_IP_2}
     depends_on:
       - alertmanager
     networks:
