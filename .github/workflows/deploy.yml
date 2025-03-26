@@ -3,7 +3,7 @@ name: EC2 배포(Ticket, Monitoring)
 on:
   push:
     branches:
-      - feature/20-add-cicd
+      - main
   workflow_dispatch:
 
 jobs:
