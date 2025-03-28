@@ -4,12 +4,56 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
-  get-ec2-info:
+  get-ip:
     runs-on: ubuntu-latest
     outputs:
-      TICKET_SERVER_PUBLIC_IP: ${{ steps.ticket-server-ec2-info.outputs.TICKET_SERVER_PUBLIC_IP }}
+      runner-ip: ${{ steps.get-ip.outputs.runner-ip }}
+
+    steps:
+      - name: CI/CD Public IP 얻기
+        id: get-ip
+        run: |
+          IP=$(curl -s ifconfig.me)
+          echo "::set-output name=runner-ip::$IP"
+
+  infra-deploy:
+    runs-on: ubuntu-latest
+    needs: get-ip
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: SSH key pair 생성
+        run: |
+          mkdir -p infrastructure/keys
+          ssh-keygen -t rsa -b 4096 -f ./infrastructure/keys/ticket-server -N ""
+          mv ./infrastructure/keys/ticket-server.pub ./infrastructure/ticket-server.pub
+
+      - name: Terraform 설치
+        uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_wrapper: 'false'
+
+      - name: Terraform 초기화
+        run: terraform init
+        working-directory: infrastructure
+
+      - name: Terraform 실행
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: terraform apply -auto-approve -var 'github_actions_ips=["${{ needs.get-ip.outputs.runner-ip }}/32"]'
+        working-directory: infrastructure
+
+  get-ec2-info:
+    runs-on: ubuntu-latest
+    needs: infra-deploy
+    outputs:
+      TICKET_SERVER_PUBLIC_IPS: ${{ steps.ticket-server-ec2-info.outputs.TICKET_SERVER_PUBLIC_IPS }}
       MONITORING_PUBLIC_IP: ${{ steps.monitoring-server-ec2-info.outputs.MONITORING_PUBLIC_IP }}
 
     steps:
@@ -23,13 +67,12 @@ jobs:
       - name: Ticket 서버 EC2 Public IP 가져오기
         id: ticket-server-ec2-info
         run: |
-          TICKET_SERVER_PUBLIC_IP=$(aws ec2 describe-instances \
+          TICKET_SERVER_PUBLIC_IPS=$(aws ec2 describe-instances \
             --filters 'Name=tag:Name,Values=spring-server' 'Name=instance-state-name,Values=running' \
-            --query 'Reservations[0].Instances[0].PublicIpAddress' \
-            --output text)
-          echo "TICKET_SERVER_PUBLIC_IP=${TICKET_SERVER_PUBLIC_IP}"
-          echo "TICKET_SERVER_PUBLIC_IP=${TICKET_SERVER_PUBLIC_IP}" >> $GITHUB_ENV
-          echo "::set-output name=TICKET_SERVER_PUBLIC_IP::${TICKET_SERVER_PUBLIC_IP}"
+            --query 'Reservations[*].Instances[*].PublicIpAddress' \
+            --output json | jq -r 'flatten | join(",")')
+          echo "TICKET_SERVER_PUBLIC_IPS=${TICKET_SERVER_PUBLIC_IPS}"
+          echo "::set-output name=TICKET_SERVER_PUBLIC_IPS::${TICKET_SERVER_PUBLIC_IPS}"
 
       - name: Monitoring 서버 EC2 Public IP 가져오기
         id: monitoring-server-ec2-info
@@ -96,28 +139,36 @@ jobs:
     steps:
       - name: 환경 변수 설정
         run: |
-          echo "TICKET_SERVER_PUBLIC_IP=${{ needs.get-ec2-info.outputs.TICKET_SERVER_PUBLIC_IP }}" >> $GITHUB_ENV
+          echo "TICKET_SERVER_PUBLIC_IPS=${{ needs.get-ec2-info.outputs.TICKET_SERVER_PUBLIC_IPS }}" >> $GITHUB_ENV
           echo "TAG=${{ needs.build-spring.outputs.TAG }}" >> $GITHUB_ENV
 
+      - name: SSH 키 생성
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SPRING_EC2_SSH_KEY }}" > ~/.ssh/ticket-server.pem
+          chmod 600 ~/.ssh/ticket-server.pem
+          eval "$(ssh-agent -s)"
+          ssh-add ~/.ssh/ticket-server.pem
+
       - name: 티켓 서버 EC2에 배포
-        uses: appleboy/ssh-action@v0.1.3
-        with:
-          host: ${{ env.TICKET_SERVER_PUBLIC_IP }}
-          username: ${{ secrets.SPRING_EC2_USER }}
-          key: ${{ secrets.SPRING_EC2_SSH_KEY }}
-          port: 22
-          script: |
-            sudo yum update -y
-            sudo yum install -y docker
-            sudo systemctl start docker
-            sudo docker pull boosterko/ticket-app:${{ env.TAG }}
-            sudo docker stop ticket-app || true
-            sudo docker rm ticket-app || true
-            sudo docker run -d -p 8080:8080 --name ticket-app \
-              -e DB_URL=${{ secrets.DB_URL }} \
-              -e DB_USERNAME=${{ secrets.DB_USERNAME }} \
-              -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
-              boosterko/ticket-app:${{ env.TAG }}
+        run: |
+          echo "TICKET_SERVER_PUBLIC_IPS=${{ env.TICKET_SERVER_PUBLIC_IPS }}"
+          IFS=',' read -r -a ips <<< "${{ env.TICKET_SERVER_PUBLIC_IPS }}"
+          for ip in "${ips[@]}"; do
+          echo "Deploying to $ip"
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/ticket-server.pem ${{ secrets.SPRING_EC2_USER }}@$ip -p 22 \
+          "sudo yum update -y && \
+               sudo yum install -y docker && \
+               sudo systemctl start docker && \
+               sudo docker pull boosterko/ticket-app:${{ env.TAG }} && \
+               sudo docker stop ticket-app || true && \
+               sudo docker rm ticket-app || true && \
+               sudo docker run -d -p 8080:8080 --name ticket-app \
+                 -e DB_URL=${{ secrets.DB_URL }} \
+                 -e DB_USERNAME=${{ secrets.DB_USERNAME }} \
+                 -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
+                 boosterko/ticket-app:${{ env.TAG }}"
+          done
 
   deploy-monitoring:
     runs-on: ubuntu-latest
@@ -130,7 +181,7 @@ jobs:
       - name: 환경 변수 설정
         run: | 
           echo "MONITORING_PUBLIC_IP=${{ needs.get-ec2-info.outputs.MONITORING_PUBLIC_IP }}" >> $GITHUB_ENV
-          echo "TICKET_SERVER_PUBLIC_IP=${{ needs.get-ec2-info.outputs.TICKET_SERVER_PUBLIC_IP }}" >> $GITHUB_ENV
+          echo "TICKET_SERVER_PUBLIC_IPS=${{ needs.get-ec2-info.outputs.TICKET_SERVER_PUBLIC_IPS }}" >> $GITHUB_ENV
 
       - name: AWS EC2로 모니터링 파일 전송
         uses: appleboy/scp-action@master
@@ -164,7 +215,10 @@ jobs:
             cd /home/${{ secrets.SPRING_EC2_USER }}/monitoring
             echo "GRAFANA_PASSWORD=${{ secrets.GRAFANA_PASSWORD }}" > .env
             echo "SLACK_API_URL=${{ secrets.SLACK_API_URL }}" >> .env
-            echo "TICKET_SERVER_PUBLIC_IP=${{ env.TICKET_SERVER_PUBLIC_IP }}" >> .env
+            for idx in $(seq 1 $(echo ${{ env.TICKET_SERVER_PUBLIC_IPS }} | tr ',' '\n' | wc -l)); do
+              ip=$(echo ${{ env.TICKET_SERVER_PUBLIC_IPS }} | cut -d',' -f$idx)
+              echo "TICKET_SERVER_PUBLIC_IP_$idx=$ip" >> .env
+            done
             sudo docker-compose pull
             sudo docker-compose down
             sudo docker-compose up -d
