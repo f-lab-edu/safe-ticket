@@ -57,8 +57,25 @@ public class TicketServiceImpl implements TicketService {
 
     @Override
     public void reserveTickets(TicketDTO ticketDTO) {
+        List<RLock> locks = getLocksForTickets(ticketDTO.getTicketIds());
+
+        RedissonMultiLock multiLock = new RedissonMultiLock(locks.toArray(new RLock[0]));
+
+        try {
+            if (!tryLock(multiLock)) {
+                throw new TicketsNotAvailableException();
+            }
+
+            reserveTicketsInRedis(ticketDTO);
+        } catch (InterruptedException e) {
+            multiLock.unlock();
+            throw new TicketsNotAvailableException();
+        }
+    }
+
+    private List<RLock> getLocksForTickets(List<Long> ticketIds) {
         List<RLock> locks = new ArrayList<>();
-        for (Long ticketId : ticketDTO.getTicketIds()) {
+        for (Long ticketId : ticketIds) {
             String redisKey = RedisKeyUtil.getTicketKey(ticketId);
 
             if (!redisTemplate.hasKey(redisKey)) {
@@ -69,23 +86,17 @@ public class TicketServiceImpl implements TicketService {
             RLock lock = redissonClient.getLock(lockKey);
             locks.add(lock);
         }
+        return locks;
+    }
 
-        RLock[] lockArray = locks.toArray(new RLock[0]);
-        RedissonMultiLock multiLock = new RedissonMultiLock(lockArray);
+    private boolean tryLock(RedissonMultiLock multiLock) throws InterruptedException {
+        return multiLock.tryLock(waitTimeSeconds, leaseTimeSeconds, TimeUnit.SECONDS);
+    }
 
-        try {
-            boolean available = multiLock.tryLock(waitTimeSeconds, leaseTimeSeconds, TimeUnit.SECONDS);
-            if (!available) {
-                throw new TicketsNotAvailableException();
-            }
-
-            for (Long ticketId : ticketDTO.getTicketIds()) {
-                String reservationKey = RedisKeyUtil.getReservationLockKey(ticketDTO.getUserId(), ticketId);
-                redisTemplate.opsForValue().set(reservationKey, TicketStatus.RESERVED.name(), Duration.ofSeconds(leaseTimeSeconds));
-            }
-        } catch (InterruptedException e) {
-            multiLock.unlock();
-            throw new TicketsNotAvailableException();
+    private void reserveTicketsInRedis(TicketDTO ticketDTO) {
+        for (Long ticketId : ticketDTO.getTicketIds()) {
+            String reservationKey = RedisKeyUtil.getReservationLockKey(ticketDTO.getUserId(), ticketId);
+            redisTemplate.opsForValue().set(reservationKey, TicketStatus.RESERVED.name(), Duration.ofSeconds(leaseTimeSeconds));
         }
     }
 }

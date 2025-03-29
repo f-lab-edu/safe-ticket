@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
+import java.util.Map;
 
 @Builder
 @Getter
@@ -13,5 +14,7 @@ import java.util.List;
 @AllArgsConstructor
 public class TicketDTO {
     private Long userId;
+    private Long showtimeId;
     private List<Long> ticketIds;
+    private Map<Long, String> ticketStatuses;
 }
