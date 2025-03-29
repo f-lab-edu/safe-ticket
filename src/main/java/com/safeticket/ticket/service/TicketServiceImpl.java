@@ -59,10 +59,11 @@ public class TicketServiceImpl implements TicketService {
     public void reserveTickets(TicketDTO ticketDTO) {
         List<RLock> locks = getLocksForTickets(ticketDTO.getTicketIds());
 
-        RedissonMultiLock multiLock = new RedissonMultiLock(locks.toArray(new RLock[0]));
+        RedissonMultiLock multiLock = createMultiLock(locks);
 
         try {
-            if (!tryLock(multiLock)) {
+            boolean lockAcquired = tryLock(multiLock);
+            if (!lockAcquired) {
                 throw new TicketsNotAvailableException();
             }
 
@@ -87,6 +88,10 @@ public class TicketServiceImpl implements TicketService {
             locks.add(lock);
         }
         return locks;
+    }
+
+    public RedissonMultiLock createMultiLock(List<RLock> locks) {
+        return new RedissonMultiLock(locks.toArray(new RLock[0]));
     }
 
     private boolean tryLock(RedissonMultiLock multiLock) throws InterruptedException {
