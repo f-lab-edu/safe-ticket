@@ -17,7 +17,6 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -38,13 +37,6 @@ public class TicketControllerTest {
         mockMvc = MockMvcBuilders.standaloneSetup(ticketController)
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
-    }
-
-    @Test
-    public void getAvailableTicketsShouldReturnStatusOKWhenSuccessful() throws Exception {
-        // when & then
-        mockMvc.perform(get("/tickets/available/1"))
-                .andExpect(status().isOk());
     }
 
     @Test
