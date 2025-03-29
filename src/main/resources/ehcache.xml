@@ -2,7 +2,7 @@
         xmlns='http://www.ehcache.org/v3'
         xsi:schemaLocation="http://www.ehcache.org/v3 http://www.ehcache.org/schema/ehcache-core.xsd">
 
-    <cache alias="availableTickets">
+    <cache alias="ehcache_availableTickets">
         <expiry>
             <ttl>10</ttl>
         </expiry>

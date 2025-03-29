@@ -17,10 +17,10 @@ public class TicketController {
 
     private final TicketService ticketService;
 
-    @TrackMetrics("available_tickets_requests_total")
-    @GetMapping("/available/{showtimeId}")
-    public ResponseEntity<AvailableTicketsDTO> getAvailableTickets(@PathVariable Long showtimeId) {
-        return ResponseEntity.ok(ticketService.getAvailableTickets(showtimeId));
+    @TrackMetrics("showtime_tickets_requests_total")
+    @GetMapping("/showtime/{showtimeId}")
+    public ResponseEntity<AvailableTicketsDTO> getShowtimeTickets(@PathVariable Long showtimeId) {
+        return ResponseEntity.ok(ticketService.getTickets(showtimeId));
     }
 
     @TrackMetrics("reservation_requests_total")
