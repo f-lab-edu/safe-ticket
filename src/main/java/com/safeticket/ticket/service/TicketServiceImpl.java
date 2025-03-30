@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -30,7 +31,7 @@ public class TicketServiceImpl implements TicketService {
     private final RedisTemplate<String, Object> redisTemplate;
     private final RedissonClient redissonClient;
 
-    @Value("${redis.lock.ticket.reservation.wait-time-seconds}")
+    @Value("${redis.lock.ticket.reservation.no-wait-time-seconds}")
     private long waitTimeSeconds;
 
     @Value("${redis.lock.ticket.reservation.lease-time-seconds}")
@@ -40,25 +41,15 @@ public class TicketServiceImpl implements TicketService {
     @Cacheable(cacheNames = "redis_showtimeTickets", key = "#showtimeId", cacheResolver = "cacheResolver")
     public AvailableTicketsDTO getTickets(Long showtimeId) {
         List<Long> tickets = ticketRepository.findAvailableTickets(showtimeId);
-        cacheTicketInRedis(tickets);
         return AvailableTicketsDTO.builder()
                 .ticketIds(tickets)
                 .build();
     }
 
-    public void cacheTicketInRedis(List<Long> ticketIds) {
-        RBatch batch = redissonClient.createBatch();
-        for (Long ticketId : ticketIds) {
-            String redisKey = RedisKeyUtil.getTicketKey(ticketId);
-            batch.getBucket(redisKey).setAsync(TicketStatus.AVAILABLE.name());
-        }
-        batch.execute();
-    }
-
     @Override
+    @Transactional
     public void reserveTickets(TicketDTO ticketDTO) {
         List<RLock> locks = getLocksForTickets(ticketDTO.getTicketIds());
-
         RedissonMultiLock multiLock = createMultiLock(locks);
 
         try {
@@ -68,6 +59,8 @@ public class TicketServiceImpl implements TicketService {
             }
 
             reserveTicketsInRedis(ticketDTO);
+            updateTicketStatusToReserved(ticketDTO);
+            invalidateCache(ticketDTO.getShowtimeId());
         } catch (InterruptedException e) {
             multiLock.unlock();
             throw new TicketsNotAvailableException();
@@ -77,13 +70,13 @@ public class TicketServiceImpl implements TicketService {
     private List<RLock> getLocksForTickets(List<Long> ticketIds) {
         List<RLock> locks = new ArrayList<>();
         for (Long ticketId : ticketIds) {
-            String redisKey = RedisKeyUtil.getTicketKey(ticketId);
+            String redisKey = RedisKeyUtil.getTicketKey(String.valueOf(ticketId));
 
             if (!redisTemplate.hasKey(redisKey)) {
                 throw new TicketsNotAvailableException();
             }
 
-            String lockKey = RedisKeyUtil.getLockTicketKey(ticketId);
+            String lockKey = RedisKeyUtil.getLockTicketKey(String.valueOf(ticketId));
             RLock lock = redissonClient.getLock(lockKey);
             locks.add(lock);
         }
@@ -102,6 +95,38 @@ public class TicketServiceImpl implements TicketService {
         for (Long ticketId : ticketDTO.getTicketIds()) {
             String reservationKey = RedisKeyUtil.getReservationLockKey(ticketDTO.getUserId(), ticketId);
             redisTemplate.opsForValue().set(reservationKey, TicketStatus.RESERVED.name(), Duration.ofSeconds(leaseTimeSeconds));
+        }
+    }
+
+    private void updateTicketStatusToReserved(TicketDTO ticketDTO) {
+        for(Long ticketId : ticketDTO.getTicketIds()) {
+            ticketRepository.updateTicketStatus(ticketId, TicketStatus.RESERVED);
+        }
+
+        RBatch batch = redissonClient.createBatch();
+        for (Long ticketId : ticketDTO.getTicketIds()) {
+            String redisKey = RedisKeyUtil.getTicketKey(String.valueOf(ticketId));
+            batch.getBucket(redisKey).setAsync(TicketStatus.RESERVED.name());
+        }
+        batch.execute();
+    }
+
+    private void invalidateCache(Long showtimeId) {
+        String cacheKey = "redis_showtimeTickets::" + showtimeId;
+        redisTemplate.delete(cacheKey);
+    }
+
+    /**
+     * 만료된 티켓의 상태를 초기화하는 메서드
+     * @param expiredKey 만료된 티켓의 Redis Key
+     */
+    @Override
+    @Transactional
+    public void handleExpiredKey(String expiredKey) {
+        if(expiredKey.startsWith(RedisKeyUtil.getLockTicketKey(""))) {
+            Long ticketId = Long.valueOf(expiredKey.split(":")[2]);
+            System.out.println("Ticket ID: " + ticketId);
+            ticketRepository.updateTicketStatus(ticketId, TicketStatus.AVAILABLE);
         }
     }
 }
