@@ -1,5 +1,6 @@
 package com.safeticket.ticket;
 
+import com.safeticket.common.util.RedisKeyUtil;
 import com.safeticket.ticket.domain.TicketStatus;
 import com.safeticket.ticket.dto.AvailableTicketsDTO;
 import com.safeticket.ticket.dto.TicketDTO;
@@ -21,6 +22,7 @@ import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.util.*;
@@ -83,22 +85,6 @@ public class TicketServiceTest {
         assertThat(result).isNotNull();
         assertThat(result.getTicketIds()).isEqualTo(tickets);
         verify(ticketRepository, times(1)).findAvailableTickets(showtimeId);
-        verify(rBatch, times(1)).execute();
-    }
-
-    @Test
-    public void cacheTicketInRedisShouldCacheTickets() {
-        // given
-        List<Long> ticketIds = Arrays.asList(1L, 2L, 3L);
-
-        // when
-        ticketService.cacheTicketInRedis(ticketIds);
-
-        // then
-        for (Long ticketId : ticketIds) {
-            verify(rBatch.getBucket("ticket:" + ticketId), times(ticketIds.size())).setAsync("AVAILABLE");
-        }
-        verify(rBatch, times(1)).execute();
     }
 
     @Test
@@ -151,5 +137,18 @@ public class TicketServiceTest {
         // when & then
         Assertions.assertThatThrownBy(() -> ticketService.reserveTickets(ticketDTO))
                 .isInstanceOf(TicketsNotAvailableException.class);
+    }
+
+    @Test
+    public void handleExpiredKeyShouldUpdateTicketStatusToAvailable(){
+        // given
+        String expiredKey = RedisKeyUtil.getLockTicketKey("1");
+        Long ticketId = 1L;
+
+        // when
+        ticketService.handleExpiredKey(expiredKey);
+
+        // then
+        verify(ticketRepository, times(1)).updateTicketStatus(ticketId, TicketStatus.AVAILABLE);
     }
 }
