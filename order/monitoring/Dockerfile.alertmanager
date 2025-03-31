@@ -1,0 +1,13 @@
+FROM alpine:latest
+
+RUN apk --no-cache add ca-certificates gettext
+
+ADD https://github.com/prometheus/alertmanager/releases/download/v0.28.1/alertmanager-0.28.1.linux-amd64.tar.gz /tmp/
+RUN tar -xzf /tmp/alertmanager-0.28.1.linux-amd64.tar.gz -C /tmp/ && \
+    mv /tmp/alertmanager-0.28.1.linux-amd64/alertmanager /bin/alertmanager && \
+    rm -rf /tmp/alertmanager-0.28.1.linux-amd64*
+
+COPY alertmanager.yml.template /etc/alertmanager/alertmanager.yml.template
+COPY alertmanager-entrypoint.sh /alertmanager-entrypoint.sh
+
+ENTRYPOINT ["/bin/sh", "/alertmanager-entrypoint.sh"]

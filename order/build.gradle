@@ -1,0 +1,62 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.4.2'
+    id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'com.hello'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Spring Boot
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.hibernate:hibernate-core:6.2.7.Final'
+    implementation 'org.springframework.boot:spring-boot-starter-cache'
+    implementation 'mysql:mysql-connector-java:8.0.33'
+
+    // Actuator and Micrometer
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'io.micrometer:micrometer-registry-prometheus'
+
+    // Lombok
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+
+    // cache
+    implementation 'org.glassfish.jaxb:jaxb-runtime:2.3.1'
+    implementation 'org.ehcache:ehcache:3.10.0'
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    implementation 'org.springframework.data:spring-data-redis'
+
+    // redisson
+    implementation 'org.redisson:redisson:3.22.0'
+
+    // rabbitmq
+    implementation 'org.springframework.boot:spring-boot-starter-amqp'
+
+    // test
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'com.h2database:h2'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+test {
+    useJUnitPlatform()
+}

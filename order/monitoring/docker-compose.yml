@@ -1,0 +1,46 @@
+services:
+  prometheus:
+    build:
+      context: .
+      dockerfile: Dockerfile.prometheus
+    container_name: prometheus
+    volumes:
+      - ./prometheus.yml.template:/etc/prometheus/prometheus.yml.template
+      - ./alert-rules.yml:/etc/prometheus/alert-rules.yml
+    ports:
+      - "9090:9090"
+    environment:
+      - TICKET_SERVER_PUBLIC_IP_1=${TICKET_SERVER_PUBLIC_IP_1}
+      - TICKET_SERVER_PUBLIC_IP_2=${TICKET_SERVER_PUBLIC_IP_2}
+    depends_on:
+      - alertmanager
+    networks:
+      - monitoring
+
+  alertmanager:
+    build:
+      context: .
+      dockerfile: Dockerfile.alertmanager
+    container_name: alertmanager
+    volumes:
+      - ./alertmanager.yml.template:/etc/alertmanager/alertmanager.yml.template
+    ports:
+      - "9093:9093"
+    environment:
+      - SLACK_API_URL=${SLACK_API_URL}
+    networks:
+      - monitoring
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
+    networks:
+      - monitoring
+
+networks:
+  monitoring:
+    driver: bridge

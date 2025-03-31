@@ -1,0 +1,18 @@
+version: '3.8'
+services:
+  controller:
+    image: ngrinder/controller:3.5.6
+    platform: linux/amd64
+    restart: always
+    ports:
+      - "8300:80"
+      - "16001:16001"
+      - "12000-12009:12000-12009"
+    volumes:
+      - ./ngrinder-controller:/opt/ngrinder-controller
+  agent:
+    image: ngrinder/agent:3.5.8
+    platform: linux/amd64
+    restart: always
+    links:
+      - controller
