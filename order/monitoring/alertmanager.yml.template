@@ -1,0 +1,17 @@
+global:
+  slack_api_url: '${SLACK_API_URL}'
+
+route:
+  receiver: 'slack_alert'
+
+receivers:
+  - name: 'slack_alert'
+    slack_configs:
+      - send_resolved: true
+        channel: '#alert-app'
+        title: '🔥 Alert: {{ .CommonLabels.alertname }}'
+        text: |
+          *Summary:* {{ .CommonAnnotations.summary }}
+          *Description:* {{ .CommonAnnotations.description }}
+          *Instance:* {{ .CommonLabels.instance }}
+          *Severity:* {{ .CommonLabels.severity }}
