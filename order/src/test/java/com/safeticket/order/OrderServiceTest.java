@@ -84,7 +84,7 @@ class OrderServiceTest {
 
         // then
         verify(redissonClient).createBatch();
-        verify(redisTemplate, times(orderDTO.getTicketIds().size())).getExpire(anyString(), eq(TimeUnit.SECONDS));
+        verify(redisTemplate, times(orderDTO.getTicketIds().size() * 2)).getExpire(anyString(), eq(TimeUnit.SECONDS));
         verify(orderRepository).save(any(Order.class));
         verify(paymentService).processPayment(any(Order.class));
 
@@ -130,9 +130,9 @@ class OrderServiceTest {
 
         // then
         verify(redissonClient).createBatch();
-        verify(redisTemplate, times(orderDTO.getTicketIds().size())).getExpire(anyString(), eq(TimeUnit.SECONDS));
-        verify(batch, times(orderDTO.getTicketIds().size())).getBucket(anyString());
-        verify(bucket, times(orderDTO.getTicketIds().size())).expireAsync(any(Instant.class));
+        verify(redisTemplate, times(orderDTO.getTicketIds().size() * 2)).getExpire(anyString(), eq(TimeUnit.SECONDS));
+        verify(batch, times(orderDTO.getTicketIds().size() * 2)).getBucket(anyString());
+        verify(bucket, times(orderDTO.getTicketIds().size() * 2)).expireAsync(any(Instant.class));
     }
 
     @Test

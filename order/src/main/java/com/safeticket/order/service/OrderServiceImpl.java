@@ -74,15 +74,19 @@ public class OrderServiceImpl implements OrderService {
         RBatch batch = redissonClient.createBatch();
 
         for (Long ticketId : orderDTO.getTicketIds()) {
-            String lockKey = RedisKeyUtil.getReservationLockKey(orderDTO.getUserId(), ticketId);
-            Long ttl = redisTemplate.getExpire(lockKey, TimeUnit.SECONDS);
+            String reservationLockKey = RedisKeyUtil.getReservationLockKey(orderDTO.getUserId(), ticketId);
+            String lockTicketKey = RedisKeyUtil.getLockTicketKey(String.valueOf(ticketId));
 
-            if (ttl <= 0) {
+            Long reservationTtl = redisTemplate.getExpire(reservationLockKey, TimeUnit.SECONDS);
+            Long lockTicketTtl = redisTemplate.getExpire(lockTicketKey, TimeUnit.SECONDS);
+
+            if (reservationTtl <= 0 || lockTicketTtl <= 0) {
                 throw new OrderCreationLockExpiredException();
             }
 
-            Instant expirationTime =Instant.ofEpochSecond(leaseTimeSeconds);
-            batch.getBucket(lockKey).expireAsync(expirationTime);
+            Instant expirationTime = Instant.ofEpochSecond(leaseTimeSeconds);
+            batch.getBucket(reservationLockKey).expireAsync(expirationTime);
+            batch.getBucket(lockTicketKey).expireAsync(expirationTime);
         }
 
         try {
