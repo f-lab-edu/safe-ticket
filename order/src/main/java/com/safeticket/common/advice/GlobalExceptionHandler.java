@@ -1,7 +1,10 @@
 package com.safeticket.common.advice;
 
 import com.safeticket.event.exception.EventNotFoundException;
+import com.safeticket.order.exception.OrderAlreadyInProgressException;
+import com.safeticket.order.exception.OrderCreationLockExpiredException;
 import com.safeticket.order.exception.OrderNotFoundException;
+import com.safeticket.order.exception.PaymentProcessingException;
 import com.safeticket.showtime.exception.ShowtimeNotFoundException;
 import com.safeticket.ticket.exception.TicketsNotAvailableException;
 import org.springframework.http.HttpStatus;
@@ -36,4 +39,23 @@ public class GlobalExceptionHandler {
     public ResponseEntity<String> handleOrderNotFoundException(OrderNotFoundException ex) {
         return new ResponseEntity<>(ex.getMessage(), HttpStatus.OK);
     }
+
+    @ExceptionHandler(PaymentProcessingException.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ResponseEntity<String> handlePaymentProcessingException(PaymentProcessingException ex) {
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(OrderCreationLockExpiredException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ResponseEntity<String> handleOrderCreationLockExpiredException(OrderCreationLockExpiredException ex) {
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(OrderAlreadyInProgressException.class)
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<String> handleOrderAlreadyInProgressException(OrderAlreadyInProgressException ex) {
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.OK);
+    }
+
 }
