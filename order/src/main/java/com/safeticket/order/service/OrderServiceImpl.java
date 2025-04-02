@@ -5,6 +5,8 @@ import com.safeticket.order.dto.OrderDTO;
 import com.safeticket.order.dto.PaymentDTO;
 import com.safeticket.order.entity.Order;
 import com.safeticket.order.entity.OrderStatus;
+import com.safeticket.order.entity.OrderTicket;
+import com.safeticket.order.exception.OrderAlreadyInProgressException;
 import com.safeticket.order.exception.OrderCreationLockExpiredException;
 import com.safeticket.order.exception.OrderNotFoundException;
 import com.safeticket.order.repository.OrderRepository;
@@ -15,12 +17,16 @@ import org.redisson.api.RedissonClient;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Service
 public class OrderServiceImpl implements OrderService {
@@ -43,6 +49,7 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional
     public OrderDTO createOrder(OrderDTO orderDTO) {
+        checkDuplicateOrder(orderDTO);
         validateAndExtendReservationLock(orderDTO);
 
         Order order = createOrderEntity(orderDTO, OrderStatus.PENDING);
@@ -61,13 +68,33 @@ public class OrderServiceImpl implements OrderService {
         orderRepository.save(order);
     }
 
+    public void checkDuplicateOrder(OrderDTO orderDTO) {
+        List<Order> existingOrderList = orderRepository.findByUserIdAndTicketIds(orderDTO.getUserId(), orderDTO.getTicketIds(), PageRequest.of(0, 1));
+        if (!existingOrderList.isEmpty()) {
+            Order existingOrder = existingOrderList.get(0);
+            if (existingOrder.getStatus() == OrderStatus.PENDING || existingOrder.getStatus() == OrderStatus.PAID) {
+                throw new OrderAlreadyInProgressException();
+            }
+        }
+    }
+
     private Order createOrderEntity(OrderDTO orderDTO, OrderStatus orderStatus) {
-        return Order.builder()
+        Order order = Order.builder()
                 .userId(orderDTO.getUserId())
                 .amount(orderDTO.getAmount())
-                .ticketIds(orderDTO.getTicketIds())
                 .status(orderStatus)
                 .build();
+
+        List<OrderTicket> orderTickets = orderDTO.getTicketIds().stream()
+                .map(ticketId -> OrderTicket.builder()
+                        .order(order)
+                        .ticketId(ticketId)
+                        .build())
+                .toList();
+
+        order.getOrderTickets().addAll(orderTickets);
+
+        return order;
     }
 
     public void validateAndExtendReservationLock(OrderDTO orderDTO) {
@@ -84,9 +111,8 @@ public class OrderServiceImpl implements OrderService {
                 throw new OrderCreationLockExpiredException();
             }
 
-            Instant expirationTime = Instant.ofEpochSecond(leaseTimeSeconds);
-            batch.getBucket(reservationLockKey).expireAsync(expirationTime);
-            batch.getBucket(lockTicketKey).expireAsync(expirationTime);
+            batch.getBucket(reservationLockKey).expireAsync(Duration.ofSeconds(leaseTimeSeconds));
+            batch.getBucket(lockTicketKey).expireAsync(Duration.ofSeconds(leaseTimeSeconds));
         }
 
         try {

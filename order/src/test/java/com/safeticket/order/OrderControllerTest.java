@@ -59,7 +59,7 @@ class OrderControllerTest {
         when(orderService.createOrder(any(OrderDTO.class))).thenReturn(orderDTO);
 
         // when
-        mockMvc.perform(post("/api/orders")
+        mockMvc.perform(post("/orders")
                         .contentType("application/json")
                         .content("{\"userId\": 1, \"amount\": 1000000, \"ticketIds\": [1, 2]}"))
                 .andExpect(status().isCreated())
@@ -76,7 +76,7 @@ class OrderControllerTest {
         when(orderService.createOrder(any(OrderDTO.class))).thenThrow(new PaymentProcessingException(String.valueOf(orderDTO.getOrderId())));
 
         // when
-        mockMvc.perform(post("/api/orders")
+        mockMvc.perform(post("/orders")
                         .contentType("application/json")
                         .content("{\"userId\": 1, \"amount\": 1000000, \"ticketIds\": [1, 2]}"))
                 .andExpect(status().isInternalServerError());

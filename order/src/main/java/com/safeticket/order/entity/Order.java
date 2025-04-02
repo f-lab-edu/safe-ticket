@@ -1,6 +1,7 @@
 package com.safeticket.order.entity;
 
 import com.esotericsoftware.kryo.serializers.FieldSerializer;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.safeticket.common.util.BaseTimeEntity;
 import com.safeticket.ticket.entity.Ticket;
 import jakarta.persistence.*;
@@ -9,6 +10,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -25,21 +27,20 @@ public class Order extends BaseTimeEntity {
 
     private Integer amount;
 
-    @ElementCollection
-    @CollectionTable(name = "orderTickets", joinColumns = @JoinColumn(name = "orderId"))
-    @Column(name = "ticketId")
-    private List<Long> ticketIds;
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
+    private List<OrderTicket> orderTickets = new ArrayList<>();
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private OrderStatus status;
 
     @Builder
-    public Order(Long id, Long userId, Integer amount, List<Long> ticketIds, OrderStatus status) {
+    public Order(Long id, Long userId, Integer amount, List<OrderTicket> orderTickets, OrderStatus status) {
         this.id = id;
         this.userId = userId;
         this.amount = amount;
-        this.ticketIds = ticketIds;
+        this.orderTickets = orderTickets != null ? orderTickets : new ArrayList<>();
         this.status = status;
     }
 

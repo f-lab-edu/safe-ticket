@@ -3,6 +3,7 @@ package com.safeticket.order;
 import com.safeticket.order.dto.OrderDTO;
 import com.safeticket.order.entity.Order;
 import com.safeticket.order.entity.OrderStatus;
+import com.safeticket.order.exception.OrderAlreadyInProgressException;
 import com.safeticket.order.exception.OrderCreationLockExpiredException;
 import com.safeticket.order.exception.OrderNotFoundException;
 import com.safeticket.order.repository.OrderRepository;
@@ -18,15 +19,16 @@ import org.redisson.api.RBatch;
 import org.redisson.api.RBucketAsync;
 import org.redisson.api.RedissonClient;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.domain.PageRequest;
 
-import java.time.Instant;
+import java.time.Duration;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.times;
@@ -64,7 +66,6 @@ class OrderServiceTest {
         order = Order.builder()
                 .userId(1L)
                 .amount(100000)
-                .ticketIds(Arrays.asList(1L, 2L))
                 .status(OrderStatus.PENDING)
                 .build();
     }
@@ -90,7 +91,6 @@ class OrderServiceTest {
 
         assertThat(createdOrder.getUserId()).isEqualTo(order.getUserId());
         assertThat(createdOrder.getAmount()).isEqualTo(order.getAmount());
-        assertThat(createdOrder.getTicketIds()).isEqualTo(order.getTicketIds());
     }
 
     @Test
@@ -106,6 +106,32 @@ class OrderServiceTest {
         verify(orderRepository, times(1)).save(any(Order.class));
         assertEquals(OrderStatus.valueOf(orderDTO.getStatus()), order.getStatus());
     }
+
+    @Test
+    void checkDuplicateOrderShouldThrowExceptionWhenOrderAlreadyInProgress() {
+        // given
+        Order existingOrder = order;
+        when(orderRepository.findByUserIdAndTicketIds(eq(orderDTO.getUserId()), eq(orderDTO.getTicketIds()), any(PageRequest.class)))
+                .thenReturn(List.of(existingOrder));
+
+        // when & then
+        assertThrows(OrderAlreadyInProgressException.class, () -> {
+            orderService.checkDuplicateOrder(orderDTO);
+        });
+    }
+
+    @Test
+    void checkDuplicateOrderShouldNotThrowException() {
+        // given
+        when(orderRepository.findByUserIdAndTicketIds(eq(orderDTO.getUserId()), eq(orderDTO.getTicketIds()), any(PageRequest.class)))
+                .thenReturn(List.of());
+
+        // when & then
+        assertDoesNotThrow(() -> {
+            orderService.checkDuplicateOrder(orderDTO);
+        });
+    }
+
 
     @Test
     void updateOrderStatusShouldThrowOrderNotFoundException() {
@@ -132,7 +158,7 @@ class OrderServiceTest {
         verify(redissonClient).createBatch();
         verify(redisTemplate, times(orderDTO.getTicketIds().size() * 2)).getExpire(anyString(), eq(TimeUnit.SECONDS));
         verify(batch, times(orderDTO.getTicketIds().size() * 2)).getBucket(anyString());
-        verify(bucket, times(orderDTO.getTicketIds().size() * 2)).expireAsync(any(Instant.class));
+        verify(bucket, times(orderDTO.getTicketIds().size() * 2)).expireAsync(any(Duration.class));
     }
 
     @Test
