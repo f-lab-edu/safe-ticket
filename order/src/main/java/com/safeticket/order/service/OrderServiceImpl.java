@@ -57,7 +57,7 @@ public class OrderServiceImpl implements OrderService {
 
         paymentService.processPayment(order);
 
-        return OrderDTO.convert(order);
+        return convertToOrderDTO(order);
     }
 
     @Override
@@ -72,7 +72,7 @@ public class OrderServiceImpl implements OrderService {
         List<Order> existingOrderList = orderRepository.findByUserIdAndTicketIds(orderDTO.getUserId(), orderDTO.getTicketIds(), PageRequest.of(0, 1));
         if (!existingOrderList.isEmpty()) {
             Order existingOrder = existingOrderList.get(0);
-            if (existingOrder.getStatus() == OrderStatus.PENDING || existingOrder.getStatus() == OrderStatus.PAID) {
+            if (existingOrder.isInProgress()) {
                 throw new OrderAlreadyInProgressException();
             }
         }
@@ -120,5 +120,17 @@ public class OrderServiceImpl implements OrderService {
         } catch (Exception e) {
             throw new OrderCreationLockExpiredException();
         }
+    }
+
+    private OrderDTO convertToOrderDTO(Order order) {
+        return OrderDTO.builder()
+                .orderId(order.getId())
+                .userId(order.getUserId())
+                .amount(order.getAmount())
+                .ticketIds(order.getOrderTickets().stream()
+                        .map(OrderTicket::getTicketId)
+                        .collect(Collectors.toList()))
+                .status(order.getStatus().name())
+                .build();
     }
 }

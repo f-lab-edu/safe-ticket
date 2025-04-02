@@ -1,9 +1,7 @@
 package com.safeticket.order.entity;
 
-import com.esotericsoftware.kryo.serializers.FieldSerializer;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.safeticket.common.util.BaseTimeEntity;
-import com.safeticket.ticket.entity.Ticket;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -46,5 +44,9 @@ public class Order extends BaseTimeEntity {
 
     public void updateStatus(OrderStatus status) {
         this.status = status;
+    }
+
+    public boolean isInProgress() {
+        return status.isInProgress();
     }
 }
