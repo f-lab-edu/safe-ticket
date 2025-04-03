@@ -1,10 +1,11 @@
 package com.safeticket.order.service;
 
-import com.safeticket.order.dto.PaymentDTO;
 import com.safeticket.order.entity.Order;
 import com.safeticket.order.exception.PaymentProcessingException;
+import com.ticket.common.dto.PaymentMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.amqp.core.MessageDeliveryMode;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,16 +28,19 @@ public class PaymentServiceImpl implements PaymentService {
     @Transactional(propagation = Propagation.REQUIRED)
     public void processPayment(Order order) {
         try {
-            PaymentDTO paymentRequest = convertToPaymentDTO(order);
-            rabbitTemplate.convertAndSend(paymentQueue, paymentRequest);
+            PaymentMessage paymentMessage = convertToPaymentMessage(order);
+            rabbitTemplate.convertAndSend(paymentQueue, paymentMessage, m -> {
+                m.getMessageProperties().setDeliveryMode(MessageDeliveryMode.PERSISTENT);
+                return m;
+            });
         } catch(Exception e) {
             logger.error("processPayment 오류 userId: {}", order.getUserId(), e);
             throw new PaymentProcessingException(String.valueOf(order.getId()));
         }
     }
 
-    private PaymentDTO convertToPaymentDTO(Order order) {
-        return PaymentDTO.builder()
+    private PaymentMessage convertToPaymentMessage(Order order) {
+        return PaymentMessage.builder()
                 .orderId(order.getId())
                 .userId(order.getUserId())
                 .amount(order.getAmount())

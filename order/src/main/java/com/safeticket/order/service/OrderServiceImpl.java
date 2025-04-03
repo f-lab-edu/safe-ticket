@@ -2,7 +2,6 @@ package com.safeticket.order.service;
 
 import com.safeticket.common.util.RedisKeyUtil;
 import com.safeticket.order.dto.OrderDTO;
-import com.safeticket.order.dto.PaymentDTO;
 import com.safeticket.order.entity.Order;
 import com.safeticket.order.entity.OrderStatus;
 import com.safeticket.order.entity.OrderTicket;
@@ -10,11 +9,10 @@ import com.safeticket.order.exception.OrderAlreadyInProgressException;
 import com.safeticket.order.exception.OrderCreationLockExpiredException;
 import com.safeticket.order.exception.OrderNotFoundException;
 import com.safeticket.order.repository.OrderRepository;
-import org.aspectj.weaver.ast.Or;
+import com.safeticket.ticket.entity.TicketStatus;
+import com.safeticket.ticket.service.TicketService;
 import org.redisson.api.RBatch;
-import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
@@ -23,7 +21,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
-import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -36,6 +33,9 @@ public class OrderServiceImpl implements OrderService {
 
     @Autowired
     private PaymentService paymentService;
+
+    @Autowired
+    private TicketService ticketService;
 
     @Autowired
     private RedissonClient redissonClient;
@@ -61,10 +61,10 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public void updateOrderStatus(OrderDTO orderDTO) {
-        Order order = orderRepository.findById(orderDTO.getUserId())
-                .orElseThrow(() -> new OrderNotFoundException(String.valueOf(orderDTO.getUserId())));
-        order.updateStatus(OrderStatus.valueOf(orderDTO.getStatus()));
+    public void updateOrderStatus(OrderDTO orderDTO, OrderStatus orderStatus) {
+        Order order = orderRepository.findById(orderDTO.getOrderId())
+                .orElseThrow(() -> new OrderNotFoundException(String.valueOf(orderDTO.getOrderId())));
+        order.updateStatus(orderStatus);
         orderRepository.save(order);
     }
 
@@ -132,5 +132,26 @@ public class OrderServiceImpl implements OrderService {
                         .collect(Collectors.toList()))
                 .status(order.getStatus().name())
                 .build();
+    }
+
+    @Override
+    @Transactional
+    public void handleSuccessPayment(OrderDTO orderDTO) {
+        updateOrderStatus(orderDTO, OrderStatus.PAID);
+        List<Long> ticketIds = orderRepository.findTicketIdsByOrderId(orderDTO.getOrderId());
+        for (Long ticketId : ticketIds) {
+            String lockTicketKey = RedisKeyUtil.getLockTicketKey(String.valueOf(ticketId));
+            String ticketKey = RedisKeyUtil.getTicketKey(String.valueOf(ticketId));
+
+            redisTemplate.delete(ticketKey);
+            redisTemplate.delete(lockTicketKey);
+
+            ticketService.updateTicketStatus(ticketId, TicketStatus.CONFIRMED);
+        }
+    }
+
+    @Override
+    public void handleFailedPayment(OrderDTO orderDTO) {
+        updateOrderStatus(orderDTO, OrderStatus.CANCELLED);
     }
 }
