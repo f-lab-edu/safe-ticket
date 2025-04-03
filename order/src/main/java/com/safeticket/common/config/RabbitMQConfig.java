@@ -15,6 +15,8 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitMQConfig {
 
+    private static final boolean DURABLE = true;
+
     @Value("${rabbitmq.queue.payment}")
     private String paymentQueue;
 
@@ -23,12 +25,12 @@ public class RabbitMQConfig {
 
     @Bean
     public Queue paymentQueue() {
-        return new Queue(paymentQueue, true);
+        return new Queue(paymentQueue, DURABLE);
     }
 
     @Bean
     public Queue orderQueue() {
-        return new Queue(orderQueue, true);
+        return new Queue(orderQueue, DURABLE);
     }
 
     @Bean
