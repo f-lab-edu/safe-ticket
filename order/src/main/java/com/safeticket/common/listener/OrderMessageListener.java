@@ -1,8 +1,8 @@
 package com.safeticket.common.listener;
 
 import com.safeticket.order.dto.OrderDTO;
+import com.safeticket.order.mapper.OrderMapper;
 import com.safeticket.order.service.OrderService;
-import com.safeticket.ticket.service.TicketService;
 import com.ticket.common.dto.PaymentMessage;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -15,13 +15,14 @@ import org.springframework.stereotype.Component;
 public class OrderMessageListener {
 
     private final OrderService orderService;
+    private final OrderMapper orderMapper = OrderMapper.INSTANCE;
 
     final Logger logger = LoggerFactory.getLogger(OrderMessageListener.class);
 
     @RabbitListener(queues = "${rabbitmq.queue.order}")
     public void handlePaymentMessage(PaymentMessage paymentMessage) {
         try {
-            OrderDTO orderDTO = convertToOrderDTO(paymentMessage);
+            OrderDTO orderDTO = orderMapper.toOrderDTO(paymentMessage);
             logger.info("message: {}, {}", paymentMessage.getOrderId(), paymentMessage.getUserId());
             if (paymentMessage.getStatus().isSuccess()) {
                 orderService.handleSuccessPayment(orderDTO);
