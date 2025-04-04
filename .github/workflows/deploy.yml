@@ -187,7 +187,7 @@ jobs:
           key: ${{ secrets.SPRING_EC2_SSH_KEY }}
           port: 22
           source: "order/monitoring/*"
-          target: "/home/${{ secrets.SPRING_EC2_USER }}/"
+          target: "/home/${{ secrets.SPRING_EC2_USER }}/monitoring/"
           overwrite: true
 
       - name: 모니터링 서버 EC2에 배포
