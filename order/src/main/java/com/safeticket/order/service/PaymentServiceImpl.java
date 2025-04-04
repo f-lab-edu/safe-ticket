@@ -31,6 +31,8 @@ public class PaymentServiceImpl implements PaymentService {
     public void processPayment(Order order) {
         try {
             PaymentMessage paymentMessage = orderMapper.toPaymentMessage(order);
+            paymentMessage.setStatusToPending();
+            logger.info("결제 처리중... userId: {}", order.getUserId());
             rabbitTemplate.convertAndSend(paymentQueue, paymentMessage, m -> {
                 m.getMessageProperties().setDeliveryMode(MessageDeliveryMode.PERSISTENT);
                 return m;

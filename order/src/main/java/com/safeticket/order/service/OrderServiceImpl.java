@@ -13,6 +13,8 @@ import com.safeticket.ticket.entity.TicketStatus;
 import com.safeticket.ticket.service.TicketService;
 import org.redisson.api.RBatch;
 import org.redisson.api.RedissonClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
@@ -46,6 +48,8 @@ public class OrderServiceImpl implements OrderService {
     @Value("${redis.lock.ticket.reservation.lease-time-seconds}")
     private long leaseTimeSeconds;
 
+    final static Logger logger = LoggerFactory.getLogger(OrderServiceImpl.class);
+
     @Override
     @Transactional
     public OrderDTO createOrder(OrderDTO orderDTO) {
@@ -72,7 +76,7 @@ public class OrderServiceImpl implements OrderService {
         List<Order> existingOrderList = orderRepository.findByUserIdAndTicketIds(orderDTO.getUserId(), orderDTO.getTicketIds(), PageRequest.of(0, 1));
         if (!existingOrderList.isEmpty()) {
             Order existingOrder = existingOrderList.get(0);
-            if (existingOrder.isInProgress()) {
+            if(OrderStatus.PENDING.canTransitionTo(existingOrder.getStatus())) {
                 throw new OrderAlreadyInProgressException();
             }
         }

@@ -45,8 +45,4 @@ public class Order extends BaseTimeEntity {
     public void updateStatus(OrderStatus status) {
         this.status = status;
     }
-
-    public boolean isInProgress() {
-        return status.isInProgress();
-    }
 }

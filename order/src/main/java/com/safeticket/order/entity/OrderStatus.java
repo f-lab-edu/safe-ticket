@@ -2,6 +2,11 @@ package com.safeticket.order.entity;
 
 import lombok.Getter;
 
+import java.util.EnumMap;
+import java.util.EnumSet;
+import java.util.Map;
+import java.util.Set;
+
 @Getter
 public enum OrderStatus {
     PENDING("PD", "대기"),
@@ -16,7 +21,15 @@ public enum OrderStatus {
         this.description = description;
     }
 
-    public boolean isInProgress() {
-        return this == PENDING || this == PAID;
+    private static final Map<OrderStatus, Set<OrderStatus>> possibleTransitions = new EnumMap<>(OrderStatus.class);
+
+    static {
+        possibleTransitions.put(PENDING, EnumSet.of(PENDING, PAID));
+        possibleTransitions.put(PAID, EnumSet.of(PAID, CANCELLED));
+        possibleTransitions.put(CANCELLED, EnumSet.of(CANCELLED));
+    }
+
+    public boolean canTransitionTo(OrderStatus targetStatus) {
+        return possibleTransitions.getOrDefault(this, EnumSet.noneOf(OrderStatus.class)).contains(targetStatus);
     }
 }
