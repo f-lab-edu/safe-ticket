@@ -119,7 +119,7 @@ jobs:
         env:
           TAG: ${{ env.TAG }}
         run: docker build -t boosterko/ticket-app:$TAG .
-        working-directory: order/ticket-server
+        working-directory: order
 
       - name: Docker Hub 로그인
         uses: docker/login-action@v1
