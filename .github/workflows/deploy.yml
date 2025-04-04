@@ -114,7 +114,7 @@ jobs:
       - name: Docker 이미지 빌드
         env:
           TAG: ${{ env.TAG }}
-        run: docker build -t boosterko/ticket-app:$TAG
+        run: docker build -t boosterko/ticket-app:$TAG .
         working-directory: order
 
       - name: Docker Hub 로그인
