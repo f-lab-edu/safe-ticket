@@ -126,7 +126,7 @@ jobs:
       - name: Docker Hub 이미지 푸시
         env:
           TAG: ${{ env.TAG }}
-        run: docker push boosterko/ticket-app:$TAG .
+        run: docker push boosterko/ticket-app:$TAG
 
   deploy-spring:
     runs-on: ubuntu-latest
