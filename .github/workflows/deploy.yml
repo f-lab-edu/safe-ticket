@@ -126,7 +126,7 @@ jobs:
       - name: Docker Hub 이미지 푸시
         env:
           TAG: ${{ env.TAG }}
-        run: docker push boosterko/ticket-app:$TAG
+        run: docker push boosterko/ticket-app:$TAG .
 
   deploy-spring:
     runs-on: ubuntu-latest
@@ -187,7 +187,7 @@ jobs:
           key: ${{ secrets.SPRING_EC2_SSH_KEY }}
           port: 22
           source: "order/monitoring/*"
-          target: "/home/${{ secrets.SPRING_EC2_USER }}/monitoring/"
+          target: "/home/${{ secrets.SPRING_EC2_USER }}/"
           overwrite: true
 
       - name: 모니터링 서버 EC2에 배포
@@ -208,7 +208,7 @@ jobs:
             sudo usermod -aG docker ${{ secrets.SPRING_EC2_USER }}
             sudo newgrp docker
             sudo docker network create monitoring
-            cd /home/${{ secrets.SPRING_EC2_USER }}/monitoring
+            cd /home/${{ secrets.SPRING_EC2_USER }}/order/monitoring
             echo "GRAFANA_PASSWORD=${{ secrets.GRAFANA_PASSWORD }}" > .env
             echo "SLACK_API_URL=${{ secrets.SLACK_API_URL }}" >> .env
             for idx in $(seq 1 $(echo ${{ env.TICKET_SERVER_PUBLIC_IPS }} | tr ',' '\n' | wc -l)); do
