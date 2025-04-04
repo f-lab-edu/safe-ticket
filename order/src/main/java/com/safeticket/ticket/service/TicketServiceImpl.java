@@ -130,4 +130,10 @@ public class TicketServiceImpl implements TicketService {
             ticketRepository.updateTicketStatus(ticketId, TicketStatus.AVAILABLE);
         }
     }
+
+    @Override
+    @Transactional
+    public void updateTicketStatus(Long ticketId, TicketStatus status) {
+        ticketRepository.updateTicketStatus(ticketId, status);
+    }
 }

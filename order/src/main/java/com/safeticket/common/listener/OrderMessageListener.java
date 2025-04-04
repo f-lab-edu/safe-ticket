@@ -33,12 +33,4 @@ public class OrderMessageListener {
             logger.error(e.getMessage());
         }
     }
-
-    private OrderDTO convertToOrderDTO(PaymentMessage paymentMessage) {
-        return OrderDTO.builder()
-                .orderId(paymentMessage.getOrderId())
-                .amount(paymentMessage.getAmount())
-                .userId(paymentMessage.getUserId())
-                .build();
-    }
 }

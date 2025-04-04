@@ -20,7 +20,7 @@ public class RabbitMQConfig {
     @Value("${rabbitmq.queue.payment}")
     private String paymentQueue;
 
-    @Value("rabbitmq.queue.order")
+    @Value("${rabbitmq.queue.order}")
     private String orderQueue;
 
     @Bean
