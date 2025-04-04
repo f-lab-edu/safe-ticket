@@ -96,15 +96,15 @@ class OrderServiceTest {
     @Test
     void updateOrderStatusShouldUpdateOrderStatus() {
         // given
-        when(orderRepository.findById(orderDTO.getUserId())).thenReturn(Optional.of(order));
+        when(orderRepository.findById(orderDTO.getOrderId())).thenReturn(Optional.of(order));
 
         // when
-        orderService.updateOrderStatus(orderDTO);
+        orderService.updateOrderStatus(orderDTO, OrderStatus.PAID);
 
         // then
-        verify(orderRepository, times(1)).findById(orderDTO.getUserId());
+        verify(orderRepository, times(1)).findById(orderDTO.getOrderId());
         verify(orderRepository, times(1)).save(any(Order.class));
-        assertEquals(OrderStatus.valueOf(orderDTO.getStatus()), order.getStatus());
+        assertEquals(OrderStatus.PAID, order.getStatus());
     }
 
     @Test
@@ -136,10 +136,10 @@ class OrderServiceTest {
     @Test
     void updateOrderStatusShouldThrowOrderNotFoundException() {
         // given
-        when(orderRepository.findById(orderDTO.getUserId())).thenReturn(Optional.empty());
+        when(orderRepository.findById(orderDTO.getOrderId())).thenReturn(Optional.empty());
 
         // when & then
-        assertThrows(OrderNotFoundException.class, () -> orderService.updateOrderStatus(orderDTO));
+        assertThrows(OrderNotFoundException.class, () -> orderService.updateOrderStatus(orderDTO, OrderStatus.PAID));
     }
 
     @Test
