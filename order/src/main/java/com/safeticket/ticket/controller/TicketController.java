@@ -3,6 +3,7 @@ package com.safeticket.ticket.controller;
 import com.safeticket.common.metrics.TrackMetrics;
 import com.safeticket.ticket.dto.AvailableTicketsDTO;
 import com.safeticket.ticket.dto.TicketDTO;
+import com.safeticket.ticket.service.TicketDataInitializer;
 import com.safeticket.ticket.service.TicketService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 public class TicketController {
 
     private final TicketService ticketService;
+    private final TicketDataInitializer ticketDataInitializer;
 
     @TrackMetrics("showtime_tickets_requests_total")
     @GetMapping("/showtime/{showtimeId}")
@@ -27,5 +29,11 @@ public class TicketController {
     @PutMapping("/reservations")
     public ResponseEntity<TicketDTO> reserveTickets(@RequestBody TicketDTO ticketDTO) {
         return ResponseEntity.ok(ticketService.reserveTickets(ticketDTO));
+    }
+
+    @GetMapping("keys")
+    public ResponseEntity<Void> initTicketKeys() {
+        ticketDataInitializer.init();
+        return ResponseEntity.ok().build();
     }
 }
