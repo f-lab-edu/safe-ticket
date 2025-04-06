@@ -3,7 +3,7 @@ name: EC2 배포(Ticket, Monitoring)
 on:
   push:
     branches:
-      - ci/deployment
+      - main
   workflow_dispatch:
 
 jobs:
