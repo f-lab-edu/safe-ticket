@@ -19,3 +19,5 @@ API를 여러 개 만드는 대신, 백엔드 로직의 안정성과 효율성�
 
 ![전체 프로젝트 구조](images/project-structure.png)
 
+## 프로젝트 WIKI 
+[프로젝트 WIKI](https://github.com/f-lab-edu/safe-ticket/wiki)
